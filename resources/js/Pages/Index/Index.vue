@@ -3,7 +3,7 @@
   <div class="">
     Hola - The message is {{ message }} from the app
   </div>
-
+  <Link :href="'some-page'">Go to some page...</Link>
 </template>
 
 <script setup>
