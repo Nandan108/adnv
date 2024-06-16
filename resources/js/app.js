@@ -1,6 +1,6 @@
 import { createApp, h } from 'vue'
 import { createInertiaApp } from '@inertiajs/vue3'
-import { ZiggyVue } from 'ziggy';
+import { ZiggyVue } from 'ziggy-js';
 import '../css/app.css'
 import MainLayout from '@/Layouts/MainLayout.vue'
 
