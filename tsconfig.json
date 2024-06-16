@@ -1,0 +1,42 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "module": "es2022",
+    "lib": ["ES2020", "ES2021", "ES2022", "DOM", "DOM.Iterable"],
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    //"moduleResolution": "node", // "bundler"
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "preserve",
+
+    "esModuleInterop": true,
+    "allowJs": true,
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": false, // This should be enabled before finalizing project
+    "noUnusedParameters": false, // This should be enabled before finalizing project
+    "noFallthroughCasesInSwitch": true,
+    "paths": {
+      "@/*": [
+          "./resources/js/*"
+      ]
+    },
+  },
+  "typeRoots": [
+    "./node_modules/@types",
+    "resources/js/Types"
+  ],
+  "include": [
+    "resources/js/**/*.ts",
+    "resources/js/**/*.d.ts",
+    "resources/js/**/*.vue"
+  ],
+  "references": [{ "path": "./tsconfig.node.json" }]
+}
