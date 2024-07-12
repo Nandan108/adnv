@@ -7,7 +7,11 @@ export default {
     "./resources/js/**/*.vue",
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontSize: {
+        '2.5xl': '1.75rem', // Custom size between 2xl and 3xl
+      },
+    },
   },
   plugins: [
     require('@tailwindcss/forms')

@@ -1,0 +1,77 @@
+@font-face {
+  font-family: "HopferHornbook";
+  src: url("../font/HopferHornbook.ttf");
+}
+
+.securiterobot {
+  @apply font-normal not-italic;
+  font-family: "HopferHornbook";
+}
+
+.blueTable {
+  @apply border border-gray-300 bg-white w-full text-center border-collapse;
+}
+.blueTable .divTableCell,
+.blueTable .divTableHead {
+  @apply border border-gray-400 p-1;
+}
+.blueTable .divTableBody .divTableCell {
+  @apply text-xs align-middle;
+  width: 12%;
+}
+.blueTable .divTableCell.even:nth-child(even),
+.blueTable .divTableCell.odd:nth-child(odd) {
+  @apply bg-gray-200;
+}
+
+.blueTable .divTableHeading {
+  @apply bg-gray-600 border-b-2 border-black;
+}
+.blueTable .divTableHeading .divTableHead {
+  @apply text-xs font-bold text-white uppercase p-2;
+  border-left: 2px solid #d0e4f5;
+  width: 12%;
+}
+.blueTable .divTableHeading .divTableHead:first-child {
+  border-left: none;
+}
+
+.blueTable .tableFootStyle {
+  @apply text-sm font-bold text-white;
+  background: linear-gradient(to bottom, #dcebf7 0%, #d4e6f6 66%, #d0e4f5 100%);
+  border-top: 2px solid #444444;
+}
+.blueTable .tableFootStyle .links {
+  @apply text-right;
+}
+.blueTable .tableFootStyle .links a {
+  @apply inline-block bg-blue-700 text-white p-1 rounded-md;
+}
+.blueTable.outerTableFooter {
+  border-top: none;
+}
+.blueTable.outerTableFooter .tableFootStyle {
+  @apply p-1;
+}
+
+/* DivTable.com */
+.divTable {
+  @apply table;
+}
+.divTableRow {
+  @apply table-row;
+}
+.divTableHeading {
+  @apply table-header-group;
+}
+.divTableCell,
+.divTableHead {
+  @apply table-cell;
+}
+.divTableFoot {
+  @apply table-footer-group;
+}
+.divTableBody {
+  @apply table-row-group;
+}
+

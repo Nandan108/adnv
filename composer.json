@@ -5,10 +5,18 @@
     "keywords": ["laravel", "framework"],
     "license": "MIT",
     "require": {
-        "php": "^8.2",
+        "awobaz/compoships": "^2.3",
+        "barryvdh/laravel-dompdf": "^2.2",
+        "components/font-awesome": "^6.5",
+        "elibyy/tcpdf-laravel": "^11.1",
+        "gregwar/captcha": "^1.2",
+        "harvesthq/chosen": "^1.8",
         "inertiajs/inertia-laravel": "^1.2",
         "laravel/framework": "^11.9",
         "laravel/tinker": "^2.9",
+        "mtvs/eloquent-hashids": "^3.5",
+        "php": "^8.2",
+        "stripe/stripe-php": "^15.1",
         "tightenco/ziggy": "^2.2"
     },
     "require-dev": {

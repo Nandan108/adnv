@@ -1,0 +1,108 @@
+@font-face {
+  font-family: "HopferHornbook";
+  src: url("../font/HopferHornbook.ttf");
+}
+/* in separate css .elements or even the whole body, edit your font properties */
+.securiterobot {
+  font-family: HopferHornbook;
+  font-weight: normal;
+  font-style: normal;
+}
+
+div.blueTable {
+  border: 1px solid #cabec1;
+  background-color: #ffffff;
+  width: 100%;
+  text-align: center;
+  border-collapse: collapse;
+}
+.divTable.blueTable .divTableCell,
+.divTable.blueTable .divTableHead {
+  border: 1px solid #aaaaaa;
+  padding: 3px 3px;
+}
+.divTable.blueTable .divTableBody .divTableCell {
+  font-size: 12px;
+  width: 12%;
+  vertical-align: middle;
+}
+.divTable.blueTable div.divTableCell.even:nth-child(even),
+.divTable.blueTable div.divTableCell.odd:nth-child(odd) {
+  background: #f1f1f1;
+}
+
+.divTable.blueTable .divTableHeading {
+  background: #9d9d9d;
+  border-bottom: 2px solid #000;
+}
+.divTable.blueTable .divTableHeading .divTableHead {
+  font-size: 15px;
+  font-weight: bold;
+  color: #ffffff;
+  border-left: 2px solid #d0e4f5;
+  text-transform: uppercase;
+  font-size: 10px;
+  padding: 10px;
+  width: 12%;
+}
+.divTable.blueTable .divTableHeading .divTableHead:first-child {
+  border-left: none;
+}
+
+.blueTable .tableFootStyle {
+  font-size: 14px;
+  font-weight: bold;
+  color: #ffffff;
+  background: #d0e4f5;
+  background: -moz-linear-gradient(top, #dcebf7 0%, #d4e6f6 66%, #d0e4f5 100%);
+  background: -webkit-linear-gradient(
+    top,
+    #dcebf7 0%,
+    #d4e6f6 66%,
+    #d0e4f5 100%
+  );
+  background: linear-gradient(to bottom, #dcebf7 0%, #d4e6f6 66%, #d0e4f5 100%);
+  border-top: 2px solid #444444;
+}
+.blueTable .tableFootStyle {
+  font-size: 14px;
+}
+.blueTable .tableFootStyle .links {
+  text-align: right;
+}
+.blueTable .tableFootStyle .links a {
+  display: inline-block;
+  background: #1c6ea4;
+  color: #ffffff;
+  padding: 2px 8px;
+  border-radius: 5px;
+}
+.blueTable.outerTableFooter {
+  border-top: none;
+}
+.blueTable.outerTableFooter .tableFootStyle {
+  padding: 3px 5px;
+}
+/* DivTable.com */
+.divTable {
+  display: table;
+}
+.divTableRow {
+  display: table-row;
+}
+.divTableHeading {
+  display: table-header-group;
+}
+.divTableCell,
+.divTableHead {
+  display: table-cell;
+}
+.divTableHeading {
+  display: table-header-group;
+}
+.divTableFoot {
+  display: table-footer-group;
+}
+.divTableBody {
+  display: table-row-group;
+}

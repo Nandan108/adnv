@@ -1,5 +1,13 @@
 <?php
 
+$production = ($env = env('APP_ENV', 'production')) === 'production';
+
+if (!$production) {
+
+}
+preg_match('/(booking|admin)/i', $_SERVER['HTTP_HOST'] ?? '', $matches);
+$request_app = $matches[1] ?? null;
+
 return [
 
     /*
@@ -13,7 +21,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Laravel'),
+    'name'            => env('APP_NAME', 'ADNV'),
 
     /*
     |--------------------------------------------------------------------------
@@ -26,7 +34,7 @@ return [
     |
     */
 
-    'env' => env('APP_ENV', 'production'),
+    'env'             => env('APP_ENV', 'production'),
 
     /*
     |--------------------------------------------------------------------------
@@ -39,7 +47,7 @@ return [
     |
     */
 
-    'debug' => (bool) env('APP_DEBUG', false),
+    'debug'           => (bool)env('APP_DEBUG', false),
 
     /*
     |--------------------------------------------------------------------------
@@ -52,7 +60,15 @@ return [
     |
     */
 
-    'url' => env('APP_URL', 'http://localhost'),
+    'admin_url'       => $adminUrl = env('ADMIN_URL'),
+    'admin_domain'    => parse_url($adminUrl, PHP_URL_HOST),
+    'booking_url'     => $bookingUrl = env('BOOKING_URL'),
+    'booking_domain'  => parse_url($bookingUrl, PHP_URL_HOST),
+    'dev_url'         => env('DEV_URL', '127.0.0.1:8000'),
+    'request_app'     => $request_app,
+    'dev_domain'      => env('DEV_DOMAIN'),
+
+    'url'             => $bookingUrl,
 
     /*
     |--------------------------------------------------------------------------
@@ -65,7 +81,7 @@ return [
     |
     */
 
-    'timezone' => env('APP_TIMEZONE', 'UTC'),
+    'timezone'        => env('APP_TIMEZONE', 'UTC'),
 
     /*
     |--------------------------------------------------------------------------
@@ -78,11 +94,11 @@ return [
     |
     */
 
-    'locale' => env('APP_LOCALE', 'en'),
+    'locale'          => env('APP_LOCALE', 'en'),
 
     'fallback_locale' => env('APP_FALLBACK_LOCALE', 'en'),
 
-    'faker_locale' => env('APP_FAKER_LOCALE', 'en_US'),
+    'faker_locale'    => env('APP_FAKER_LOCALE', 'en_US'),
 
     /*
     |--------------------------------------------------------------------------
@@ -95,13 +111,13 @@ return [
     |
     */
 
-    'cipher' => 'AES-256-CBC',
+    'cipher'          => 'AES-256-CBC',
 
-    'key' => env('APP_KEY'),
+    'key'             => env('APP_KEY'),
 
-    'previous_keys' => [
+    'previous_keys'   => [
         ...array_filter(
-            explode(',', env('APP_PREVIOUS_KEYS', ''))
+            explode(',', env('APP_PREVIOUS_KEYS', '')),
         ),
     ],
 
@@ -118,9 +134,9 @@ return [
     |
     */
 
-    'maintenance' => [
+    'maintenance'     => [
         'driver' => env('APP_MAINTENANCE_DRIVER', 'file'),
-        'store' => env('APP_MAINTENANCE_STORE', 'database'),
+        'store'  => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
 ];

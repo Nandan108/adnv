@@ -1,0 +1,38 @@
+
+.poppy {
+  position: relative;
+  z-index: 999999;
+  background-color: none;
+  width: 60%;
+  top: 15%;
+  overflow: hidden;
+
+  position:           fixed;
+
+
+
+}
+
+
+.close-btn {
+  height: 0px;
+  width: 0px;
+  border-radius: 15px;
+  margin: 5px -10px;
+  float: right;
+  background-color: #1FB616;
+  content: "";
+  cursor: pointer;
+}
+
+#poppyScreen {
+  background-color: #000;
+  position: absolute;
+  z-index: 998;
+  height: 2200px;
+  width: 100%;
+  opacity: 0.6;
+  display: none;
+  overflow:none;
+}
+

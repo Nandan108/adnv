@@ -2,9 +2,20 @@
 
 *.blade.php diff=html
 *.css diff=css
+*.less diff=css
 *.html diff=html
 *.md diff=markdown
 *.php diff=php
+*.png binary
+*.jpg binary
+*.gif binary
+*.pdf binary
+*.zip binary
+*.ttf binary
+*.woff binary
+*.woff2 binary
+*.eot binary
+*.otf binary
 
 /.github export-ignore
 CHANGELOG.md export-ignore

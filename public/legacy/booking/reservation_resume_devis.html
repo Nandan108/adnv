@@ -1,0 +1,237 @@
+<!-- Trip summary -->
+<div class="divTable blueTable">
+    <div class="divTableHeading display_none">
+        <div class="divTableRow">
+            <div class="divTableHead">Personne</div>
+            <div class="divTableHead">Vols</div>
+            <div class="divTableHead">Taxes aéroport</div>
+            <div class="divTableHead">Transferts</div>
+            <div class="divTableHead">Visa</div>
+            <div class="divTableHead">Hôtel</div>
+            <div class="divTableHead" style="width: 12%">Total</div>
+        </div>
+    </div>
+    <div class="divTableBody display_none">
+        <template x-for="participant in participants">
+            <div class="divTableRow" x-data="{ tots: participant.totals.total }">
+                <div class="divTableCell even">
+                    <div class="flex justify-center">
+                        <div>
+                            <span x-text="uc1st(participant.typePerson)"></span> :
+                            <span class="font-bold" x-text="participant.prenom"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="divTableCell even">
+                    <div class="flex justify-center" x-html="chfHtml(tots.vol)"></div>
+                </div>
+                <div class="divTableCell even">
+                    <div class="flex justify-center" x-html="chfHtml(tots.taxes_apt)"></div>
+                </div>
+                <div class="divTableCell even">
+                    <div class="flex justify-center" x-html="chfHtml(tots.transfert)"></div>
+                    <template x-if="participant.typePerson !== participant.totals.typePerson.transfert">
+                        <div x-text="'(tarif '+personLabels[participant.totals.typePerson.transfert]+')'"></div>
+                    </template>
+                </div>
+                <div class="divTableCell even">
+                    <div class="flex justify-center" x-html="chfHtml(tots.visa)"></div>
+                    <template x-if="participant.typePerson !== participant.totals.typePerson.visa">
+                        <div x-text="'(tarif '+personLabels[participant.totals.typePerson.visa]+')'"></div>
+                    </template>
+                </div>
+                <div class="divTableCell even">
+                    <div class="flex justify-center" x-html="chfHtml(tots.chambre)"></div>
+                    <template x-if="participant.typePerson !== participant.totals.typePerson.chambre">
+                        <div x-text="'(tarif '+personLabels[participant.totals.typePerson.chambre]+')'"></div>
+                    </template>
+                </div>
+                <div class="divTableCell even font-bold">
+                    <div class="flex justify-center" x-html="chfHtml(participant.totals.sousTotalSejour, 2, true)"></div>
+                </div>
+            </div>
+        </template>
+        <div class="divTableRow">
+            <div class="divTableCell even"><span class='font-bold'>Sous total séjour</span></div>
+            <div class="divTableCell even " style="background: none;border-width: 0;"></div>
+            <div class="divTableCell even " style="background: none;border-width: 0;"></div>
+            <div class="divTableCell even " style="background: none;border-width: 0;"></div>
+            <div class="divTableCell even " style="background: none;border-width: 0;"></div>
+            <div class="divTableCell even " style="background: none;border-width: 0;"></div>
+            <div class="divTableCell even font-bold">
+                <div class="flex justify-center" x-html="chfHtml(totalSejour, 2, true)"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Options summary -->
+<!-- <pre style="text-wrap: wrap" x-text="'prestations: ' + JSON.stringify(Object.keys(prestations).map(t => t))"></pre> -->
+
+<div class="flex flex-row gap-4 flex-wrap justify-between">
+    <!-- Tours / Excursions -->
+    <template x-if="participants.some(p => Object.keys(p.totals.options.tours).length)">
+        <div class="divTable blueTable inline w-auto" style="margin-top:2em; border:none">
+            <div class="divTableHeading">
+                <div class="divTableRow">
+                    <div class="divTableHead">Personne</div>
+                    <template x-for="(tour, i) in tours">
+                        <div class="divTableHead" :class="{ 'border-r-0': i > 0 }">
+                            Excursion<br>
+                            <span x-text="tour.nom"></span>
+                        </div>
+                    </template>
+                    <div class="divTableHead">Total</div>
+                </div>
+            </div>
+            <div class="divTableBody">
+                <template x-for="participant in participants">
+                    <div class="divTableRow" x-data="{ tots: participant.totals.total }">
+                        <div class="divTableCell even">
+                            <div class="flex justify-center">
+                                <div>
+                                    <div>
+                                        <span x-text="uc1st(participant.typePerson)"></span> :
+                                        <span class="font-bold" x-text="participant.prenom"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <template x-for="(tour, i) in tours">
+                            <div class="divTableCell odd"">
+                                <div class="flex justify-center"
+                                    x-html="chfHtml(participant.totals.options.tours[tour.id]?.total)"></div>
+                            </div>
+                        </template>
+                        <div class="divTableCell odd">
+                            <div class="flex justify-center font-bold"
+                            x-html="chfHtml(Object.keys(tours).reduce((sum, tourID) =>
+                                sum + (participant.totals.options.tours[tourID]?.total || 0), 0), 2, 1)"></div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </template>
+
+    <!-- Meals & Services / Repas et Prestations -->
+     <template x-if="participants.some(p => Object.keys(p.totals.options.prests).length)">
+        <div class="divTable blueTable inline w-auto" style="margin-top:2em;border:none">
+            <div class="divTableHeading">
+                <div class="divTableRow">
+                    <div class="divTableHead">Personne</div>
+                    <template x-if="repas">
+                        <div class="divTableHead">
+                            Repas<br>
+                            <span x-text="repas.type.name"></span>
+                        </div>
+                    </template>
+                    <template x-for="(prest, i) in prestations">
+                        <div class="divTableHead">
+                            Prestation <span style="display:none" x-text='prest.id'></span><br>
+                            <span x-text="prest.type ? `${prest.type.name} (${prest.name})` : '&quot;'+prest.name+'&quot;'"></span>
+                        </div>
+                    </template>
+                    <div class="divTableHead">Total</div>
+                </div>
+            </div>
+            <div class="divTableBody">
+                <template x-for="participant in participants">
+                    <div class="divTableRow" x-data="{ tots: participant.totals.total }">
+                        <div class="divTableCell even">
+                            <div class="flex justify-center gap-1">
+                                <span x-text="uc1st(participant.typePerson)"></span> :
+                                <span class="font-bold" x-text="participant.prenom"></span>
+                            </div>
+                        </div>
+                        <template x-if="repas">
+                            <div class="divTableCell odd" x-data="{ price: participant.totals.options.prests[repas.id] }">
+                                <div class="flex justify-center" :class="{ disabled: price === undefined }"
+                                    x-html="price === undefined ? '&nbsp; N/A' : chfHtml(price)"></div>
+                            </div>
+                        </template>
+                        <template x-for="(prest, i) in prestations">
+                            <div class="divTableCell" :class="{ odd: !repas,'border-r-0': i > 0 }"
+                                x-data="{ price: participant.totals.options.prests[prest.id] }">
+                                <div class="flex justify-center" :class="{ disabled: price === undefined }"
+                                    x-html="price === undefined ? '&nbsp; N/A' : chfHtml(price)"></div>
+                            </div>
+                        </template>
+                        <div class="divTableCell odd">
+                            <div class="flex justify-center font-bold"
+                            x-html="chfHtml((participant.totals.options.prests[repas.id] ?? 0) +
+                                Object.keys(prestations).reduce((sum, prestID) =>
+                                    sum + (participant.totals.options.prests[prestID] || 0), 0), 2, 1)"></div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </template>
+</div>
+
+<!-- ---------- FINAL TOTAL ---------- -->
+ <!-- <pre style="text-wrap: wrap" x-text="'foo-bar: '+JSON.stringify(participants[0].totals)"></pre> -->
+<div class="divTable blueTable" style="margin-top:2em">
+    <div class="divTableHeading">
+        <div class="divTableRow">
+            <div class="divTableHead">Personne</div>
+            <div class="divTableHead">Report Sous-total Séjour<br>+ Excursions + Prestations</div>
+            <div class="divTableHead">Assurance<br><i>Secure Trip</i></div>
+            <div class="divTableHead">Taxes APT</div>
+            <div class="divTableHead">Total</div>
+        </div>
+    </div>
+    <div class="divTableBody">
+        <template x-for="participant in participants">
+            <div class="divTableRow" x-data="{
+                tots: participant.totals.total,
+            }">
+                <div class="divTableCell even">
+                    <div class="flex justify-center gap-1">
+                        <span x-text="uc1st(participant.typePerson)"></span> :
+                        <span class="font-bold" x-text="participant.prenom"></span>
+                    </div>
+                </div>
+                <div class="divTableCell">
+                    <div class="flex justify-center nowrap"
+                        x-html="chfHtml(
+                            tots.chambre +
+                            tots.transfert +
+                            tots.visa +
+                            tots.vol +
+                            tots.prestations +
+                            tots.tours
+                        )"></div>
+                </div>
+                <div class="divTableCell odd">
+                    <div class="flex justify-center"
+                        x-html="chfHtml(participant.totals?.assurance?.price || 0)"></div>
+                </div>
+                <div class="divTableCell">
+                    <div class="flex justify-center"
+                        x-html="chfHtml(tots.taxes_apt)"></div>
+                </div>
+                <div class="divTableCell odd">
+                    <div class="flex justify-center"
+                        x-html="chfHtml(participant.totals.totalFinal,2,1)"></div>
+                </div>
+            </div>
+        </template>
+        <div class="divTableRow" id="ligne_tour_adulte_1">
+            <div class="divTableCell" style="border:none">&nbsp;</div>
+            <div class="divTableCell" style="border:none"></div>
+            <div class="divTableCell" style="border:none"></div>
+            <div class="divTableCell" style="border:none"></div>
+            <div class="divTableCell" style="border:none"></div>
+        </div>
+        <div class="divTableRow" id="ligne_tour_adulte_1">
+            <div class="divTableCell font-bold text-red" style="border-right-width: 0">MONTANT FINAL DU DEVIS</div>
+            <div class="divTableCell" style="border-width: 1px 0"></div>
+            <div class="divTableCell" style="border-width: 1px 0"></div>
+            <div class="divTableCell" style="border-width: 1px 0"></div>
+            <div class="divTableCell odd text-red">
+                <div class="flex justify-center font-bold"
+                    x-html="chfHtml(participants.reduce((acc, p) => acc + p.totals.totalFinal, 2, 'chf') || 0, 2, 1)"></div>
+            </div>
+    </div>
+    </div>
+</div>
