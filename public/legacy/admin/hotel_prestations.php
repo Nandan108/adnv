@@ -80,8 +80,8 @@ switch ($action = $_GET['action'] ?? null) {
 $hotel or erreur_404("Hotel $id_hotel n'existe pas");
 
 $prestationsParType = $hotel->allPrestations
-    ->groupBy(fn($prest) => ($prest->type->repas ? 'Repas - ' : '') .
-        $prest->type?->nom_option .
+    ->groupBy(fn($prest) => ($prest->type?->is_meal ? 'Repas - ' : '') .
+        $prest->type?->name .
         ($prest->obligatoire ? ' (obligatoire)' : ''));
 
 ?>

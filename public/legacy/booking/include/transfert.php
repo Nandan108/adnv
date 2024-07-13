@@ -16,8 +16,8 @@ return function ($pageData) {
             </div>
             <div class='flex-1'>
                 <table style='border:none'>
-                    <tr><th>Départ du transfert :</th><td x-text='transfert.code_apt + " / " + aeroports[transfert.code_apt].ville'></td></tr>
-                    <tr><th>Arrivée du transfert : &nbsp; </th><td x-text='transfert.nomHotel'></td></tr>
+                    <tr><th>Départ Apt. :</th><td x-text='transfert.code_apt + " / " + aeroports[transfert.code_apt].ville'></td></tr>
+                    <tr><th>Arrivée Hôtel : &nbsp; </th><td x-text='transfert.nomHotel'></td></tr>
                     <!-- <tr><th>Partenaire : </th><td x-text='transfert.partenaire.nom_partenaire'></td></tr> -->
                     <tr><th>Type : </th><td x-text="transfert.type"></td></tr>
                 </table>

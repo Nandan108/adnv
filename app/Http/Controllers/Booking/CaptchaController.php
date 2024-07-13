@@ -19,6 +19,7 @@ class CaptchaController
         $captchaBuilder = new CaptchaBuilder();
         $captchaBuilder->build();
         session(['captcha-phrase' => $phrase = $captchaBuilder->getPhrase()]);
+        session()->save();
 
         self::sleep(1);
 

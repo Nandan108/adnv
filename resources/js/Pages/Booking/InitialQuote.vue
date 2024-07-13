@@ -3,11 +3,10 @@
     <div class="mx-auto lg:max-w-[75%] p-10">
       <div class="bg-white text-lg p-10 mb-16 border shadow-lg border-slate-100 print:hidden">
         <h3 class="mb-3">Merci pour votre demande !</h3>
-
         <p class="mb-4">Nous accusons réception de votre demande, qui sera traitée dans les plus
           brefs délais, selon les ouvertures de notre agence.</p>
         <p class="mb-4">Votre devis final vous sera transmit par courriel. En cas de non-réponse de
-          notre part dans les 24 heures (jours ouvrés) et après avoir vérifié votre
+          notre part dans les 24 heures (jours ouvrables) et après avoir vérifié votre
           boîte de spam, nous vous prions de nous addresser un courriel afin de
           vérifier notre envoi.</p>
         <p class="mb-4">En vous remerciant pour votre compréhension et au nom d'ADN voyage, nous
@@ -66,7 +65,8 @@
               <td class="px-2">Prix</td>
               <td class="px-2">Total</td>
             </tr>
-            <tr v-for="item in quote.items.filter(item => item.section === 'primary')">
+
+            <tr v-for="item in items.primary">
               <td class="px-2">{{ item.description }}</td>
               <td class="px-2 text-center">{{ item.qtty }}</td>
               <td class="px-2 text-right">{{ numFormatter.format(item.unitprice) }}</td>
@@ -74,36 +74,46 @@
             </tr>
             <tr>
               <td class="text-right font-bold" colspan="3">Total séjour</td>
-              <td class="px-2 text-right font-bold">{{ numFormatter.format(sectionTotals.primary) }}</td>
-            </tr>
-            <tr><td colspan="4" class="border-0">&nbsp;</td></tr>
-            <tr class="bg-cyan-300 text-lg border border-slate-300">
-              <td class="px-2">Description&nbsp; | &nbsp;<strong>Options supplémentaires commandées</strong></td>
-              <td class="px-2 text-center">Quantité</td>
-              <td class="px-2 text-right">Prix</td>
-              <td class="px-2 text-right">Total</td>
-            </tr>
-            <tr v-for="item in quote.items.filter(item => item.section === 'options')">
-              <td class="px-2">{{ item.description }}</td>
-              <td class="px-2 text-center">{{ item.qtty }}</td>
-              <td class="px-2 text-right">{{ numFormatter.format(item.unitprice) }}</td>
-              <td class="px-2 text-right">{{ numFormatter.format(item.qtty * item.unitprice) }}</td>
+              <td class="px-2 text-right font-bold">{{ numFormatter.format(totals.primary) }}</td>
             </tr>
             <tr>
-              <td class="text-right font-bold" colspan="3">Total options</td>
-              <td class="px-2 text-right font-bold">{{ numFormatter.format(sectionTotals.options) }}</td>
+              <td colspan="4" class="border-0">&nbsp;</td>
             </tr>
-            <tr><td colspan="4" class="border-0">&nbsp;</td></tr>
+            <template v-if="items.options">
+              <tr class="bg-cyan-300 text-lg border border-slate-300">
+                <td class="px-2">Description&nbsp; | &nbsp;<strong>Options supplémentaires commandées</strong></td>
+                <td class="px-2 text-center">Quantité</td>
+                <td class="px-2 text-right">Prix</td>
+                <td class="px-2 text-right">Total</td>
+              </tr>
+              <tr v-for="item in items.options">
+                <td class="px-2">{{ item.description }}</td>
+                <td class="px-2 text-center">{{ item.qtty }}</td>
+                <td class="px-2 text-right">{{ numFormatter.format(item.unitprice) }}</td>
+                <td class="px-2 text-right">{{ numFormatter.format(item.qtty * item.unitprice) }}</td>
+              </tr>
+              <tr>
+                <td class="text-right font-bold" colspan="3">Total options</td>
+                <td class="px-2 text-right font-bold">{{ numFormatter.format(totals.options) }}</td>
+              </tr>
+              <tr>
+                <td colspan="4" class="border-0">&nbsp;</td>
+              </tr>
+            </template>
             <tr>
               <td class="bg-cyan-300 font-bold text-xl" colspan="3">Total Devis {{ quote.currency.code }}</td>
-              <td class="px-2 text-right font-bold text-xl">{{ numFormatter.format(sectionTotals.primary + sectionTotals.options ?? 0 ) }}</td>
+              <td class="px-2 text-right font-bold text-xl">{{ numFormatter.format(totals.total ?? 0) }}</td>
             </tr>
           </table>
 
-          <div class="text-lg">
-            <p>Nous vous remercions pour votre commande et attirons votre attention sur vos données mentionnées ci-dessus.</p>
-            <p>Merci de, vous assurez que vos informations personnelles correspondent à ceux, mentionnée dans votre passeport et de nous fournir une copie de ceux-ci dès que possible.</p>
-            <p>En vous remerciant pour votre compréhension et au nom d’ADN voyage, nous vous souhaitons une bonne réception de votre facture.</p>
+          <div class="text-lg text-justify">
+            <p>Nous vous remercions pour votre commande et attirons votre attention sur vos données mentionnées
+              ci-dessus.</p>
+            <p>Merci de vous assurer que vos informations personnelles correspondent à celles mentionnées dans votre
+              passeport et de nous fournir une copie de ceux-ci dès que possible.</p>
+            <p>En vous remerciant pour votre compréhension et au nom d’ADN voyage, nous vous souhaitons une bonne
+              réception de
+              votre devis.</p>
             <p class="pl-[60%]">Cordiales salutations</p>
           </div>
 
@@ -134,12 +144,23 @@ const props = defineProps({
   // }
 });
 
-const sectionTotals = computed(() => {
-  return props.quote.items.reduce((acc, item) => {
-    acc[item.section] = (acc[item.section] ?? 0) + item.qtty * item.unitprice
+// compute section subtotals and final total
+const totals = computed(() =>
+  props.quote.items.reduce((acc, item) => {
+    let itemTotal = item.qtty * item.unitprice;
+    acc[item.section] = (acc[item.section] ?? 0) + itemTotal;
+    acc.total += itemTotal;
     return acc;
-  }, {});
-})
+  }, { total: 0 })
+)
+
+// groupe items by section name
+const items = computed(() =>
+  props.quote.items.reduce((acc, item) => {
+    (acc[item.section] ??= []).push(item);
+    return acc;
+  }, [])
+)
 
 const numFormatter = Intl.NumberFormat('fr-CH', { minimumFractionDigits: 2 })
 
@@ -159,8 +180,7 @@ export default {
 }
 
 .page {
-  @apply bg-white p-16 max-w-5xl mx-auto shadow-lg border
-    border-slate-100 print:p-0 print:shadow-none print:border-none
+  @apply bg-white p-16 max-w-5xl mx-auto shadow-lg border border-slate-100 print:p-0 print:shadow-none print:border-none
 }
 
 table.border {
@@ -170,6 +190,7 @@ table.border {
 table.td-border td {
   @apply border border-slate-300 px-3 py-1
 }
+
 table.td-border td.border-0 {
   border: none;
 }

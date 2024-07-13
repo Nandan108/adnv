@@ -49,16 +49,27 @@ function page()
     $nb_bebe      = $reservation->nb_bebe;
     $ages         = $reservation->ages_enfants;
     $personCounts = $reservation->personCounts;
-    $hotel        = $reservation->chambre->hotel;
+    $hotel        = $reservation->chambre?->hotel;
 
-    $url = http_build_query([
-        'h'          => $reservation->chambre->id_hotel,
-        'du'         => $reservation->date_depart,
-        'au'         => $reservation->date_retour,
-        'nb_adultes' => $personCounts['adulte'],
-        'ages'       => $reservation->ages_enfants,
-        'nb_bebe'    => $personCounts['bebe'],
-    ]);
+    if ($hotelId = $reservation->chambre?->id_hotel) {
+        $url = '/hotel_detail.php?' . http_build_query([
+            'h'          => $hotelId,
+            'du'         => $reservation->date_depart,
+            'au'         => $reservation->date_retour,
+            'nb_adultes' => $personCounts['adulte'],
+            'ages'       => $reservation->ages_enfants,
+            'nb_bebe'    => $personCounts['bebe'],
+        ]);
+    } else {
+        $url = '/hotels.php?' . http_build_query([
+            'destination' => $codePays,
+            'du'          => $reservation->date_depart,
+            'au'          => $reservation->date_retour,
+            'adulte'      => $personCounts['adulte'],
+            'ages'        => $reservation->ages_enfants,
+            'bebe'        => $personCounts['bebe'],
+        ]);
+    }
 
     $assurances = Assurance::toutesParPrix(
         titreSansAssurance: 'Aucune - je ne désire pas souscrire à une assurance voyage.',
@@ -241,19 +252,21 @@ function page()
                 chfHtml(number, decimals = 2, currency = false) {
                     let num = this.chf(number, decimals, currency).split(/[,.]/);
                     return `<div class="number">
-                                            <span class="whole">${num[0]}</span>
-                                            <span class="decimal">,</span>
-                                            <span class="fractional">${num[1]}</span>
-                                        </div>`.replace(/\s+/, ' ');
+                                                    <span class="whole">${num[0]}</span>
+                                                    <span class="decimal">,</span>
+                                                    <span class="fractional">${num[1]}</span>
+                                                </div>`.replace(/\s+/, ' ');
                 },
                 get totalSejour() {
                     return pageData.participants.reduce((acc, p) => acc + p.totals.sousTotalSejour, 0);
                 },
                 fetchJson(query, options = {}) {
-                    options = { headers: {
-                        "Content-Type": "application/json",
-                        'X-CSRF-TOKEN': <?= json_encode(csrf_token()) ?>, // Include the CSRF token in the headers
-                    },...options};
+                    options = {
+                        headers: {
+                            "Content-Type": "application/json",
+                            'X-CSRF-TOKEN': <?= json_encode(csrf_token()) ?>, // Include the CSRF token in the headers
+                        }, ...options
+                    };
 
                     try {
                         let promise = fetch(query, options);
@@ -337,7 +350,7 @@ function page()
             <div class="row">
                 <div class="col text-center">
                     <h2 class="tm-section-title">
-                        HOTEL - <?= $hotel->nom ?>
+                        HOTEL - <?= $hotel->nom ?? '<i>aucun</i>' ?>
                     </h2>
                     <p class="tm-color-white tm-section-subtitle">
                     </p>
@@ -549,7 +562,7 @@ function page()
                     <div class="col-sm-12 texte_icone display_none">
                         <h4>
                             <span class="icone"><i class="fa fa-book"></i></span>
-                            <span class="texte">RÉSUMÉ DE VOTRE DEVIS A L'HÔTEL (<?= $hotel->nom ?>)
+                            <span class="texte">RÉSUMÉ DE VOTRE DEVIS <?= $hotel ? "À L'HÔTEL <i>$hotel->nom</i>" : '' ?>
                             </span>
                         </h4>
                     </div>
@@ -578,8 +591,8 @@ function page()
                                 <div class="form-group form_group_line"
                                     style="margin-right: 5px;display: inline-block;width: 100%;">
                                     <label for="exampleInputName2">Vous pouvez écrire ci-dessous vos remarques</label>
-                                    <textarea class="form-control" style="width: 100%; height: 100px;" name='client_remarques'
-                                        x-model="reserv_form.client_remarques"></textarea>
+                                    <textarea class="form-control" style="width: 100%; height: 100px;"
+                                        name='client_remarques' x-model="reserv_form.client_remarques"></textarea>
                                 </div>
                             </div>
                         </div>
@@ -614,15 +627,15 @@ function page()
                                 <div class="form-group form_group_line"
                                     style="margin-right: 5px;display: inline-block;width: 48%;">
                                     <label for="exampleInputName2">Nom *</label>
-                                    <input type="text" name='lastname' x-model="reserv_form.last_name"
-                                        class="form-control" id="nom-coordonnees" required>
+                                    <input type="text" name='lastname' x-model="reserv_form.last_name" class="form-control"
+                                        id="nom-coordonnees" required>
                                 </div>
 
                                 <div class="form-group form_group_line"
                                     style="margin-right: 5px;display: inline-block;width: 48%;">
                                     <label for="exampleInputName2">Prenom *</label>
-                                    <input type="text" name='firstname' x-model="reserv_form.firstname"
-                                        class="form-control" id="prenom-coordonnees" required>
+                                    <input type="text" name='firstname' x-model="reserv_form.firstname" class="form-control"
+                                        id="prenom-coordonnees" required>
                                 </div>
                                 <script>
                                     $(() => {
@@ -640,8 +653,8 @@ function page()
                                 <div class="form-group form_group_line"
                                     style="margin-right: 5px;display: inline-block;width: 48%;">
                                     <label for="email">Adresse email *</label>
-                                    <input type="text" class="form-control" name='email'
-                                        x-model="reserv_form.email" x-ref="email" required>
+                                    <input type="text" class="form-control" name='email' x-model="reserv_form.email"
+                                        x-ref="email" required>
                                 </div>
                                 <div class="form-group form_group_line"
                                     style="margin-right: 5px;display: inline-block;width: 48%;">
@@ -653,7 +666,8 @@ function page()
                                 <div class="form-group form_group_line"
                                     style="margin-right: 5px;display: inline-block;width: 98%;">
                                     <label for="exampleInputName2">Téléphone * </label>
-                                    <input type="text" class="form-control" x-model="reserv_form.phone" name="phone" required>
+                                    <input type="text" class="form-control" x-model="reserv_form.phone" name="phone"
+                                        required>
                                 </div>
 
                             </div>
@@ -667,8 +681,8 @@ function page()
                                 <div class="form-group form_group_line"
                                     style="margin-right: 5px;display: inline-block;width: 48%;">
                                     <label for="exampleInputName2">Rue *</label>
-                                    <input type="text" class="form-control" name="street"
-                                        x-model="reserv_form.street" required>
+                                    <input type="text" class="form-control" name="street" x-model="reserv_form.street"
+                                        required>
                                 </div>
 
                                 <div class="form-group form_group_line"
@@ -681,14 +695,12 @@ function page()
                                 <div class="form-group form_group_line"
                                     style="margin-right: 5px;display: inline-block;width: 48%;">
                                     <label for="exampleInputName2">NPA *</label>
-                                    <input type="text" class="form-control" name="zip"
-                                        x-model="reserv_form.zip" required>
+                                    <input type="text" class="form-control" name="zip" x-model="reserv_form.zip" required>
                                 </div>
                                 <div class="form-group form_group_line"
                                     style="margin-right: 5px;display: inline-block;width: 48%;">
                                     <label for="exampleInputName2">Lieu *</label>
-                                    <input type="text" class="form-control" name="city"
-                                        x-model="reserv_form.city" required>
+                                    <input type="text" class="form-control" name="city" x-model="reserv_form.city" required>
                                 </div>
                                 <div class="form-group form_group_line">
 
@@ -726,8 +738,7 @@ function page()
 
                     <div class="mt-3 ml-5">
                         <label for="chk-cgcv" class="inline-block">
-                            <input type="checkbox" class="inline-block mr-2" value="1" name="cgcv" id="chk-cgcv"
-                                required>
+                            <input type="checkbox" class="inline-block mr-2" value="1" name="cgcv" id="chk-cgcv" required>
                             J'ai pris note des conditions générales d'assurance (CGA) sont la base de tout
                             contrat d'assurance. Vous trouverez ici <a target="_blank"
                                 href="https://www.allianz-travel.ch/fr_CH/partner/documents-formation.html#">
@@ -781,7 +792,8 @@ function page()
                                 <div>Merci d'introduire ci-dessous le code afin de démontrer que que vous n'êtes pas un
                                     robot.</div>
                                 <div class="mt-2 mb-1 font-bold text-red-500" x-text="captcha.showMessage || '&nbsp'"></div>
-                                <input type="text" class="form-control" x-model="reserv_form.captchaUserInput" name="captchaUserInput" required>
+                                <input type="text" class="form-control" x-model="reserv_form.captchaUserInput"
+                                    name="captchaUserInput" required>
                             </div>
                             <div class="col-sm-4">
 
@@ -793,8 +805,7 @@ function page()
 
                         <div class="row bouton">
                             <div class="col-sm-6 affiche">
-                                <a href="hotel_detail.php?w=<?php echo $hotel->id; ?>&<?php echo $url; ?>"
-                                    class="btn btn-primary btn-red bnt-gray">Retour</a>
+                                <a href="<?= $url ?>" class="btn btn-primary btn-red bnt-gray">Retour</a>
                             </div>
                             <div class="col-sm-6" style="text-align: right">
 
@@ -805,8 +816,7 @@ function page()
                                 <!--<button type="submit" class="btn btn-primary btn-red" name="reservation">Réservez maintenant</button>-->
                             </div>
                             <div class="col-sm-6 affiche2">
-                                <a href="hotel_detail.php?w=<?php echo $hotel->id ?>&<?php echo $url; ?>"
-                                    class="btn btn-primary btn-red bnt-gray">Retour</a>
+                                <a href="<?= $url ?>" class="btn btn-primary btn-red bnt-gray">Retour</a>
                             </div>
                         </div>
                     </div>

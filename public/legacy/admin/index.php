@@ -38,8 +38,7 @@ if (isset($_POST['valider'])) {
                 'account_login' => $credentials['account_login'],
                 'account_pass' => $credentials['account_pass'],
             ]);
-
-            $session = session()->all();
+            session()->save();
 
             // redirection après login
             $url = URL::get($redirUrl);

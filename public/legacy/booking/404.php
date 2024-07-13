@@ -26,7 +26,7 @@ $_page_subtitle ??= "404 - Page Not Found";
 </style>
 <script>
     let countdown = 5;
-    <?php if (!$_ENV['APP_DEBUG']) { ?>
+    <?php if (!config('app.debug')) { ?>
         function updateTimer() {
             document.getElementById('timer').textContent = countdown;
             if (countdown > 0) {
@@ -45,7 +45,7 @@ $_page_subtitle ??= "404 - Page Not Found";
 <div id="err_container">
     <h1>404 - Recherche échouée</h1>
     <p>Nous sommes désolé, il semble qu'une erreur technique soit survenue.<br>L'objet recherché n'a pas pu être trouvé.</p>
-    <?php if (!$_ENV['APP_DEBUG']) { ?>
+    <?php if (!config('app.debug')) { ?>
         <p>Vous serez renvoyé à la page précédente dans <span class="timer" id="timer">5</span> secondes...</p>
     <?php } ?>
 </div>

@@ -37,9 +37,6 @@ class Quote extends Commercialdoc
 
         // Séjour adultes 13 nuits à l’hôtel Canonnier Beachcomber Golf Resort& Spa 4* | 2 | 4285.00 | 8570.00
 
-        // = Vol + transfert + Hotel Adulte
-        $totalsByFlightType = $resTotals->groupBy(fn($tot) => $tot->typePerson['vol']);
-
         // Let's group non-adults together as 'child'
         $totalsByType = collect([
             'adult'    => $resTotals->filter(fn($tot)    => $tot->typePerson['vol'] === 'adulte'),
@@ -55,10 +52,16 @@ class Quote extends Commercialdoc
             ),
         ]);
 
-        $nomHotel = $reservation->chambre->hotel->nom;
+        if ($nomHotel = $reservation->chambre?->hotel->nom) {
+            $description = "Séjour adulte $reservation->nbNuitsHotel nuits à l'hôtel \"$nomHotel\"";
+        } else {
+            $apt = $reservation->prixVol->vol->apt_arrive;
+            $nomAeroport = "$apt->code_aeroport / {$apt->lieu->ville} ({$apt->aeroport})";
+            $description = "Vol aller-retour pour $nomAeroport";
+        }
 
         $items[] = $quote->items()->create([
-            'description'  => "Séjour adulte $reservation->nbNuitsHotel nuits à l'hôtel \"$nomHotel\"",
+            'description'  => $description,
             'qtty'         => $count = $tripTotalByType['adult']->count,
             'unitprice'    => $tripTotalByType['adult']->sum / $count,
             'discount_pct' => 0, // TODO input pre-discount unitprice, then show discount
@@ -75,18 +78,22 @@ class Quote extends Commercialdoc
             ]);
         }
 
-        $taxesByType = $totalsByFlightType->map(fn($totals) => (object)[
-            'count' => $totals->count(),
-            'sum'   => $totals->sum(fn($tot)   => $tot->total['taxes_apt']),
-        ])->filter(fn($taxes, $personType) => $taxes->count);
+        // = Vol + transfert + Hotel Adulte
+        if ($totalsByFlightType = $resTotals->groupBy(fn($tot) => $tot->typePerson['vol'])) {
 
-        foreach ($taxesByType as $personType => $taxes) {
-            $items[] = $quote->items()->create([
-                'description' => "Taxes d'aéroport et surcharge carburant - $personType",
-                'qtty'        => $taxes->count,
-                'unitprice'   => $taxes->sum / $taxes->count,
-                'section'     => 'primary',
-            ]);
+            $taxesByType = $totalsByFlightType->map(fn($totals) => (object)[
+                'count' => $totals->count(),
+                'sum'   => $totals->sum(fn($tot)   => $tot->total['taxes_apt']),
+            ])->filter(fn($taxes, $personType) => $taxes->count);
+
+            foreach ($taxesByType as $personType => $taxes) {
+                $items[] = $quote->items()->create([
+                    'description' => "Taxes d'aéroport et surcharge carburant - $personType",
+                    'qtty'        => $taxes->count,
+                    'unitprice'   => $taxes->sum / $taxes->count,
+                    'section'     => 'primary',
+                ]);
+            }
         }
 
         if ($sumVisas = $resTotals->sum(fn($total) => $total->total['visa'])) {
@@ -98,7 +105,6 @@ class Quote extends Commercialdoc
                 'section'     => 'options',
             ]);
         }
-        ;
 
         $meal = $reservation->prestations->
             filter(fn($prest) => $prest->type?->is_meal)->first();

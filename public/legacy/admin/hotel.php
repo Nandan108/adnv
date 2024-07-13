@@ -52,8 +52,8 @@ if ($_POST['save'] ?? false) {
 
         if (!($redirURL = URL::base64_decode($_POST['redir'] ?? ''))) {
             $hotel_list_url = URL::get("hotels.php")->setParams([
-                'code_pays' => $_POST['code_pays'],
-                'region' => $_POST['region'],
+                'code_pays' => $_POST['code_pays'] ?? null,
+                'region' => $_POST['region'] ?? null,
             ]);
         }
 

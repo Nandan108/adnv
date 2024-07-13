@@ -86,6 +86,7 @@ class Reservation extends Model
      */
     public function getPersonCountsAttribute()
     {
+        $agesEnfants = $this->ages_enfants;
         return collect([
             'adulte' => $this->nb_adulte,
             'enfant' => count($this->ages_enfants),
@@ -97,9 +98,10 @@ class Reservation extends Model
     protected function agesEnfants(): Attribute
     {
         return Attribute::make(
-            get: fn($value) => collect(explode(',', $value))
+            get: fn($value) => $value === '' ? [] :
+            collect(explode(',', $value))
                 ->map(fn($a) => (int)$a)->sortDesc()->values(),
-            set: fn($value) => collect($value)->join(','),
+            set: fn($value) => collect($value)->sortDesc()->join(','),
         );
     }
 
@@ -410,8 +412,11 @@ class Reservation extends Model
             $tarifsChambre = null;
         }
 
-        $transfertPersonCounts   = $this->transfert->getPersonCounts($participants, $this->date_depart);
-        $transfertTotalPerPerson = ($transfert = $this->transfert)
+        $transfert               = $this->transfert;
+        $transfertPersonCounts   = $transfert
+            ? $transfert->getPersonCounts($participants, $this->date_depart)
+            : null;
+        $transfertTotalPerPerson = $transfert
             ? $transfertPersonCounts->map(fn($count, $person) => $transfert->calcUnitTotal($person, $count))
             : null;
 
@@ -426,8 +431,14 @@ class Reservation extends Model
                 $age = $participant->age;
 
                 $tarifs['total'] = array_fill_keys([
-                    'chambre', 'transfert', 'visa', 'vol', 'taxes_apt',
-                    'prestations', 'tours', 'assurance',
+                    'chambre',
+                    'transfert',
+                    'visa',
+                    'vol',
+                    'taxes_apt',
+                    'prestations',
+                    'tours',
+                    'assurance',
                 ], 0);
 
                 if ($tarifsChambre) {
@@ -440,7 +451,16 @@ class Reservation extends Model
                     $tarifs['typePerson']['transfert'] = $transfertPersonType = $transfert->getPersonType($age);
                     $tarifs['total']['transfert'] = $transfertTotalPerPerson[$transfertPersonType];
                 }
-                $pays           = $this->chambre->hotel->lieu->paysObj;
+
+                // take the country from hotel
+                $pays = $this->chambre?->hotel->lieu->paysObj;
+                // and if there's no hotel, then take if from the flight's destination
+                // There can't be a reservation without either flight or hotel.
+                if (!$pays && $this->prixVol) {
+                    $this->prixVol->vol->load('apt_arrive.lieu.paysObj');
+                    $pays = $this->prixVol->vol->apt_arrive->lieu->paysObj;
+                }
+
                 $paysPersonType = $pays->getPersonType($age);
                 if ($pays->{"visa_$paysPersonType"}) {
                     $tarifs['typePerson']['visa'] = $paysPersonType;
@@ -491,7 +511,7 @@ class Reservation extends Model
 
                 if ($participant->assurance) {
                     $tarifs['assurance'] = [
-                        'id' => $participant->assurance->id,
+                        'id'    => $participant->assurance->id,
                         'price' => $participant->assurance->prix($tarifs['sousTotalPourAssurance']),
                     ];
                 }

@@ -113,7 +113,7 @@ function page()
 
     if (!$hotel) {
         include '404.php';
-        if ($_ENV['APP_DEBUG']) {
+        if (config('app.debug')) {
             $toDump = [
                 // 'pageData'  => json_encode($pageData ?? null, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
                 // 'Query log' => getQueryLog(),
@@ -344,7 +344,7 @@ function page()
         ->keyBy('nom');
 
     // DEBUG: show tours first
-    //if ($_ENV['APP_DEBUG']) $tabs = $tabs->sortBy(fn($tab) => $tab->nom !== 'tour');
+    //if (config('app.debug')) $tabs = $tabs->sortBy(fn($tab) => $tab->nom !== 'tour');
 
     $pageData = [
         'pays'               => $pays,
@@ -1358,7 +1358,7 @@ function page()
 
     <?php
 
-    if ($_ENV['APP_DEBUG']) {
+    if (config('app.debug')) {
         $toDump = [
             'pageData'  => json_encode($pageData, JSON_PRETTY_PRINT),
             //'Query log' => getQueryLog(),

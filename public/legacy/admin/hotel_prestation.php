@@ -40,7 +40,7 @@ if ($id_repas_hotel = (int)($_GET['id'] ?? $_GET['id_repas_hotel'] ?? null)) {
     if (!($presta = Prestation::with(['provider', 'type'])->find($id_repas_hotel))) {
         erreur_404(ucfirst($__['leRepas']) . " n°$id_repas_hotel n'existe pas.");
     } else {
-        $choseWords($presta->type->repas);
+        $choseWords($presta->type?->is_meal);
     }
 } else {
     // créer un nouveau repas et y associer l'hotel
@@ -88,7 +88,7 @@ if (isset($_POST['save'])) {
 }
 
 $monnaies   = Monnaie::all();
-$typesRepas = TypePrestation::where('repas', $estRepas)->orderBy('nom_option')->get();
+$typesRepas = TypePrestation::where('is_meal', $estRepas ?? 0)->orderBy('name')->get();
 
 
 ?>
@@ -191,11 +191,12 @@ $typesRepas = TypePrestation::where('repas', $estRepas)->orderBy('nom_option')->
                             <label class="control-label">Type de <?=ucfirst($__['typePrest'])?></label>
                             <div class="controls">
                                 <select id="challenge_question_control" class="span4 chosen" name="id_type">
+                                    <option value=''></option>
                                     <?= printSelectOptions(
                                         source: $typesRepas,
-                                        valueSource: 'id_option',
+                                        valueSource: 'id',
                                         selectedVal: $presta->id_type,
-                                        displaySource: 'nom_option',
+                                        displaySource: 'name',
                                     ) ?>
                                 </select>
                             </div>
