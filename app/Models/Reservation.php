@@ -1,14 +1,16 @@
 <?php
 namespace App\Models;
 
+use App\Models\Commercialdoc\Quote;
+use App\Traits\CanStoreUnsyncedBelongsToMany;
 use App\Traits\HasPersonTypes;
 use Illuminate\Database\Eloquent\Casts\AsArrayObject;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection as BaseCollection;
 use Mtvs\EloquentHashids\HasHashid;
 use Mtvs\EloquentHashids\HashidRouting;
@@ -16,10 +18,11 @@ use Mtvs\EloquentHashids\HashidRouting;
 class Reservation extends Model
 {
     use HasPersonTypes;
+    use CanStoreUnsyncedBelongsToMany;
     use HasHashid, HashidRouting;
 
     protected $table = 'reservations';
-    protected $appends = ['hashid'];
+    protected $appends = ['hashid', 'md5Id'];
     protected $fillable = [
         'code_pays', // destination
         'date_depart', // date de début du vol d'aller
@@ -47,12 +50,13 @@ class Reservation extends Model
 
     const PERSON_LABELS = [
         'adulte' => 'Adulte',
-        'enfant' => 'Enfant',
         'bebe'   => 'Bébé',
+        'enfant' => 'Enfant',
     ];
 
     protected $casts = [
         'contact_info' => AsArrayObject::class,
+        'ages_enfants' => 'array',
     ];
 
     protected static function boot()
@@ -81,28 +85,32 @@ class Reservation extends Model
             ->first();
     }
 
+    public function getMd5IdAttribute()
+    {
+        return md5($this->id);
+    }
+
     /**
      * A Collection: [ 'adulte' => int, 'enfant' => int, 'bebe' => int ]
      */
     public function getPersonCountsAttribute()
     {
-        $agesEnfants = $this->ages_enfants;
         return collect([
             'adulte' => $this->nb_adulte,
-            'enfant' => count($this->ages_enfants),
-            'bebe'   => $this->nb_bebe,
+            'bebe'   => count(array_filter($this->ages_enfants, fn($a) => $a <= 1)),
+            'enfant' => count(array_filter($this->ages_enfants, fn($a) => $a > 1)),
         ]);
     }
 
     // attribute `ages_enfants` is a CSV list of integers
-    protected function agesEnfants(): Attribute
+    protected function setAgesEnfantsAttribute(string|array $value)
     {
-        return Attribute::make(
-            get: fn($value) => $value === '' ? [] :
-            collect(explode(',', $value))
-                ->map(fn($a) => (int)$a)->sortDesc()->values(),
-            set: fn($value) => collect($value)->sortDesc()->join(','),
-        );
+        $value = collect($value && is_string($value) ? $value : ($value ?: []))
+            ->map(fn($age) => (int)$age)
+            ->sort()
+            ->values();
+
+        $this->attributes['ages_enfants'] = json_encode($value);
     }
 
     /**
@@ -133,6 +141,20 @@ class Reservation extends Model
         return $this->nbNuits - $nuitVol;
     }
 
+    public function getDatesHotelStayAttribute(): array
+    {
+        return [
+            $this->prixVol?->vol?->arrive_next_day
+            ? date('Y-m-d', strtotime("$this->date_depart + 1 day"))
+            : $this->date_depart,
+            $this->date_retour,
+        ];
+    }
+
+    public function quote()
+    {
+        return $this->hasOne(Quote::class);
+    }
 
     public function pays()
     {
@@ -161,7 +183,7 @@ class Reservation extends Model
     {
         return $this->belongsToMany(Prestation::class, ReservationPrestation::class)
             ->as('participants')
-            ->withPivot('adulte', 'enfant', 'bebe');
+            ->withPivot(array_keys(self::PERSON_LABELS));
     }
 
     public function participants(): MorphMany
@@ -176,63 +198,11 @@ class Reservation extends Model
     {
         return $this->belongsToMany(Tour::class, ReservationTour::class)
             ->as('participants')
-            ->withPivot('adulte', 'enfant', 'bebe');
-    }
-
-    protected $unsavedPivots = [];
-    public function loadUnsynced($relationName)
-    {
-        if (
-            ($pivots = $this->unsavedPivots[$relationName] ?? null) &&
-            !$this->getRelation($relationName)->count()
-        ) {
-            $relation = $this->$relationName();
-
-            $relatedKey = $relation->getRelatedKeyName();
-            if ($keys = $pivots->keys()) {
-                $models = $relation->getRelated()::whereIn($relatedKey, $keys)->get();
-
-                $relation->match([$this], $models, $relatedKey);
-                //$relation->get
-                // Need to load participants: App\Models\ReservationPrestation
-                $this->setRelation($relationName, $models);
-            }
-
-            if ($this->relationLoaded($relationName))
-                return $this->getRelation($relationName);
-        }
-        return parent::getRelationValue($relationName);
-    }
-
-    public function getRelationValue($relationName)
-    {
-        if (($rel = $this->relations[$relationName] ?? null) && $rel->count()) {
-            return $rel;
-        } else {
-            $relation = $this->$relationName();
-            if ($relation instanceof BelongsToMany) {
-                return $this->loadUnsynced($relationName);
-            } else {
-                return parent::getRelationValue($relationName);
-            }
-        }
-    }
-
-    public function save(array $options = [])
-    {
-        $saved = parent::save($options);
-
-        // after saving the model, save pending pivots
-        foreach ($this->unsavedPivots as $relation => $pivots) {
-            $this->{$relation}()->sync($pivots);
-            unset($this->unsavedPivots[$relation]);
-        }
-
-        return $saved;
+            ->withPivot(array_keys(self::PERSON_LABELS));
     }
 
     /**
-     * Undocumented function
+     * Returns a new Reservation object (not saved to DB yet) filled with provided data
      *
      * @param string $codePays
      * @param \ArrayAccess $datesVoyage
@@ -256,6 +226,9 @@ class Reservation extends Model
         BaseCollection $prestations,
         BaseCollection $tours,
     ) {
+        // add baby to kid's ages
+        if ($personCounts['bebe']) $agesEnfants[] = 1;
+
         $reservation = new Reservation([
             'code_pays'    => $codePays,
             'date_depart'  => $datesVoyage[0],
@@ -269,16 +242,29 @@ class Reservation extends Model
             'ages_enfants' => $agesEnfants,
         ]);
 
-        $reservation->unsavedPivots['prestations'] = $prestations;
-        $reservation->unsavedPivots['tours']       = $tours;
+        // Since the relationship isn't saved to DB, we can't ->sync() the
+        // prestations and tour models yet as we don't have an ID.
+        // So instead, we store them as 'unsynced', and they can still be
+        // transparently referenced when calculating totals.
+        $reservation->setUnsyncedPivots('prestations', $prestations);
+        $reservation->setUnsyncedPivots('tours', $tours);
 
         return $reservation;
     }
 
-    public function getParticipants(): Collection
+    /**
+     * getAllParticipants() returns all participants that should exist, according to
+     * person counts (adulte, enfant, bebe). Yet unpersisted participants are created
+     * and returned, but not saved to DB.
+     * If $idxKey is specified, only the matching participant will be returned.
+     *
+     * @param string|null $idxKey
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getAllParticipants($idxKey = null): Collection
     {
         Voyageur::setDateDebutVoyage($this->date_depart);
-        $participants = $this->participants;
+        $participants = collect($this->participants);
 
         $countsByAdulte = [true => 0, false => 0];
 
@@ -290,61 +276,51 @@ class Reservation extends Model
         $newParticipants = [];
 
         foreach ($persons as [$person, $idx]) {
-            $adulte = (int)($person === 'adulte');
-            $idx    = $countsByAdulte[$person === 'adulte']++;
-            if (
-                $participant = $participants->first(
-                    fn($p) => $p->adulte == $adulte && $p->idx == $idx
-                )
-            ) continue;
+            $idx               = $countsByAdulte[$isAdult = $person === 'adulte']++;
+            $participantIdxkey = (int)!$isAdult . '-' . $idx;
 
-            // either get it from DB
-            if ($person === 'adulte') {
-                $date_naissance = null;
-                $age            = 99;
-            } else {
-                $age = ($person === 'enfant')
-                    ? $this->ages_enfants[$idx] // for children, age is provided
-                    : 1;  // for babies, we assume about 1 yo
+            // if this participant is already persisted skip to the next
+            if ($participants->contains(fn($p) => $p->idxKey === $participantIdxkey))
+                continue;
 
-                // create a fake birthdate
-                $date_naissance = \DateTime::createFromFormat('Y-m-d', $this->date_depart);
-                $date_naissance->modify("-$age years -180 days");
-                $date_naissance = $date_naissance->format('Y-m-d');
-            }
-
-            // or make a new one if there's none in DB
             $newParticipants[]         = $participant = new Voyageur([
-                'adulte'         => $adulte,
-                'idx'            => $idx,
-                'options'        => [],
-                'date_naissance' => $date_naissance,
+                'adulte'                => (int)$isAdult,
+                'idx'                   => $idx,
+                'options'               => [],
+                'code_pays_nationalite' => 'ch',
             ]);
             $participant->booking_id   = $this->id;
             $participant->booking_type = static::class;
 
-            $this->participants->add($participant);
+            if (!$isAdult) {
+                $participant->ageAtTripStart = $this->ages_enfants[$idx] ?? 1;
+            }
+
+            $participants->add($participant);
         }
 
         // sort
-        $sortedParticipants = $this->participants->sort(
+        $participants = $participants->sort(
             fn($a, $b) =>
             $b->adulte <=> $a->adulte ?:
             $a->idx <=> $b->idx
         )->values();
-        $this->setRelation('participants', $sortedParticipants);
-
 
         // set tours options on unsaved participants
         foreach ($this->tours as $tour) {
-            $tourPersonTypes = $tour->getVoyageurPersonTypesIdx($this->participants);
+            $tourPersonTypes = $tour->getVoyageurPersonTypesIdx($participants);
 
             foreach ($newParticipants as $participant) {
                 [$personType, $idx] = $tourPersonTypes[$participant];
 
                 // Add option only if there's a non-NULL price
                 // A NULL price means the price is not available for this person type (adulte/enfant/bebe)
-                if ($tour->{"prix_net_$personType"} !== null && $tour->participants[$personType] >= $idx) {
+                if (
+                    $tour->{"prix_net_$personType"} !== null
+                    // TODO: the following check poses the risk of ignoring a personType change; from when
+                    // $tour->participants was set. Is this a problem? Needs investigation.
+                    && $tour->participants[$personType] >= $idx
+                ) {
                     // At first, participation is set as decided in earlier page and stored in participants
                     $participant->options['tours'][] = $tour->id;
                 }
@@ -355,7 +331,7 @@ class Reservation extends Model
         if ($this->chambre) {
             // for a room, we have to consider the group as a whole to distribute person "types" as they
             //  may overflow to a higher type if there's too many.
-            $chambrePersonTypesIdx = $this->chambre->getVoyageurPersonTypesIdx($this->participants);
+            $chambrePersonTypesIdx = $this->chambre->getVoyageurPersonTypesIdx($participants);
             foreach ($newParticipants as $participant) {
                 [$personType, $idx] = $chambrePersonTypesIdx[$participant];
 
@@ -366,7 +342,6 @@ class Reservation extends Model
                     if ($prestation->{$personType . '_net'} !== null) {
                         // At first, participation is set as decided in earlier page and stored in participants
                         if ($prestation->participants[$personType] >= $idx) {
-                            ;
                             $participant->options['prests'][] = $prestation->id; //$prestation->participants[$person] >= $idx;
                         }
                     }
@@ -376,10 +351,19 @@ class Reservation extends Model
             }
         }
 
-        return $this->participants;
+        return new Collection(
+            $participants
+                ->filter(fn($p) => $idxKey ? $p->idxKey === $idxKey : true)
+                ->values(),
+        );
     }
 
-    public function getTotals($participant = null): BaseCollection|\stdClass
+    /**
+     * Returns a liste of trip price information, one entry per traveler.
+     * @param mixed $participantIdxKey
+     * @return \Illuminate\Support\Collection|\stdClass
+     */
+    public function getTotals($participantIdxKey = null): BaseCollection|\stdClass
     {
         $this->load([
             'chambre.hotel.lieu.paysObj',
@@ -389,23 +373,18 @@ class Reservation extends Model
             'participants.assurance',
         ]);
 
-        $oneParticipant = !!$participant;
-        $participants   = $participant ? collect([$participant]) : $this->getParticipants();
+        $participants = $this->getAllParticipants();
+        // $this->setRelation('participants', $participants);
 
         // set date_depart system-wide, to allow calculation of $participant->age when needed
         Voyageur::setDateDebutVoyage($this->date_depart);
 
         if ($chambre = $this->chambre) {
-            $chambrePersonCounts = $chambre->getPersonCounts($this->participants, $this->date_depart);
+            $chambrePersonCounts = $chambre->getPersonCounts($participants, $this->date_depart);
             $tarifsChambre       = $chambre->getPrixNuit(
                 personCounts: $chambrePersonCounts,
                 agesEnfants: $this->ages_enfants,
-                datesVoyage: [
-                    // TODO: create and use attribute $this->date_debut_sejour
-                    // which takes in account $this->vol?->arrive_next_day
-                    $this->date_depart,
-                    $this->date_retour,
-                ],
+                datesStay: $this->datesHotelStay,
                 prixParNuit: false, // we want total
             );
         } else {
@@ -425,7 +404,7 @@ class Reservation extends Model
             : null;
 
         $participantTotals = $participants->map(
-            function ($participant) use ($chambre, $tarifsChambre, $transfert, $transfertTotalPerPerson, $chambrePersonTypesIdx) {
+            function ($participant) use ($tarifsChambre, $transfert, $transfertTotalPerPerson, $chambrePersonTypesIdx) {
                 //['person' => $person, 'num' => $num] = (array)$personNum;
 
                 $age = $participant->age;
@@ -440,6 +419,8 @@ class Reservation extends Model
                     'tours',
                     'assurance',
                 ], 0);
+
+                $tarifs['fullIdx'] = $participant->idxKey;
 
                 if ($tarifsChambre) {
                     [$chambrePersonType, $chambrePersonIdx] = $chambrePersonTypesIdx[$participant];
@@ -518,14 +499,16 @@ class Reservation extends Model
                 $tarifs['totalFinal'] = $tarifs['sousTotalSejour'] +
                     $tarifs['total']['prestations'] +
                     $tarifs['total']['tours'] +
-                    $tarifs['total']['assurance'];
+                    ($tarifs['assurance']['price'] ?? 0);
 
                 return (object)$tarifs;
             }
         );
 
-        if ($oneParticipant) {
-            return $participantTotals->first();
+        // $this->setRelation('participants', $participants->filter(fn($p) => $p->id));
+
+        if ($participantIdxKey) {
+            return $participantTotals->first(fn($total) => $total->fullIdx === $participantIdxKey);
         }
 
         return $participantTotals;

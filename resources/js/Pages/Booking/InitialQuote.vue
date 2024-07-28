@@ -3,6 +3,7 @@
     <div class="mx-auto lg:max-w-[75%] p-10">
       <div class="bg-white text-lg p-10 mb-16 border shadow-lg border-slate-100 print:hidden">
         <h3 class="mb-3">Merci pour votre demande !</h3>
+        <p class="text-xs text-center -mt-3 mb-3">Reçue le {{ formattedCreateDate }}</p>
         <p class="mb-4">Nous accusons réception de votre demande, qui sera traitée dans les plus
           brefs délais, selon les ouvertures de notre agence.</p>
         <p class="mb-4">Votre devis final vous sera transmit par courriel. En cas de non-réponse de
@@ -32,7 +33,7 @@
         <div>
           <h3>Devis Initial</h3>
 
-          <div id="client-address" class="text-lg w-72 bg-slate-100 relative ml-auto p-3 px-6">
+          <div id="client-address" class="text-lg w-72 bg-slate-50 relative ml-auto p-3 px-6">
             <div>{{ quote.firstname }} {{ quote.lastname }}</div>
             <div>{{ quote.street + (quote.street_num ? ', ' + quote.street_num : '') }}</div>
             <div>{{ quote.zip }} {{ quote.city }}</div>
@@ -144,6 +145,11 @@ const props = defineProps({
   // }
 });
 
+// Format the created_at date using date-fns
+const formattedCreateDate = computed(() => {
+  return format(new Date(props.quote.created_at), 'd MMMM yyyy à HH:mm', { locale: fr });
+});
+
 // compute section subtotals and final total
 const totals = computed(() =>
   props.quote.items.reduce((acc, item) => {
@@ -208,14 +214,7 @@ h4 {
 }
 
 p {
-  @apply text-lg mb-2
+  @apply mb-2
 }
 
-/*
-@media screen and (max-width: 480px) {
-  .form-control {
-    padding: 0.4rem 0.70rem;
-    font-size: 12px;
-  }
-}*/
 </style>

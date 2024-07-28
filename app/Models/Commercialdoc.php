@@ -19,12 +19,11 @@ class Commercialdoc extends Model
 
     protected $fillable = [
         'doc_id',
-        'deadline',
-        'monnaie_id',
-        'reservation_id',
-        'quote_confirmed_at',
+        'type', // enum('quote','invoice')
         'currency_code',
-        'object_type', // enum ['trip', 'circuit', 'cruise']
+        'reservation_id',
+        'deadline',
+        'object_type', // enum ('trip', 'circuit', 'cruise')
         'client_remarques',
         'lastname',
         'firstname',

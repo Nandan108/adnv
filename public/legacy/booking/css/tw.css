@@ -253,3 +253,7 @@
 .left-0 {
   left: 0px;
 }
+.text-red-700 {
+  --tw-text-opacity: 1;
+  color: rgb(185 28 28 / var(--tw-text-opacity)) /* #b91c1c */;
+}

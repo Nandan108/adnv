@@ -49,7 +49,8 @@ class Vol extends Model
     ];
 
     // needed for HasPersonType::getPersonType()
-    public function getDebutValiditeAttribute() {
+    public function getDebutValiditeAttribute()
+    {
         return $this->debut_voyage;
     }
 
@@ -187,6 +188,7 @@ class Vol extends Model
             'nomJourDepart' => fmtDate('cccc', $dateDepart),
             'departValide'  => $this->jourDepartEstValide($dateDepart),
             'datesDeparts'  => $this->departsAlteratifs($dateDepart),
+            'next_day_arr'   => $this->arrive_next_day,
         ];
 
         return $infoVol;

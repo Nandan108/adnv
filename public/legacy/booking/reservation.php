@@ -1,5 +1,4 @@
 <?php
-use App\Http\Controllers\Booking\CaptchaController;
 use App\Models\Hotel;
 use App\Models\Prestation;
 use App\Models\Reservation;
@@ -17,20 +16,22 @@ page();
 function page()
 {
     ?>
-
-    <!--
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.css" />
-    <link rel="stylesheet" type="text/css" href="date/jquery.datetimepicker.css" />
-    -->
     <link rel="stylesheet" type="text/css" href="css/reservation.css">
 
 
     <?php
     if ($md5Id = $_GET['xx'] ?? null) {
-        $reservation = Reservation::findByMd5($md5Id);
+
+        $reservation = Reservation::with([
+            'chambre.hotel',
+            'prixVol.vol',
+            'transfert',
+            'prestations',
+            'tours',
+            'participants',
+        ])->findByMd5($md5Id);
+
+
     } elseif ($hashId = $_GET['rID'] ?? null) {
         $reservation = Reservation::findByHashid($hashId);
     }
@@ -86,7 +87,7 @@ function page()
 
     $personLabels = Reservation::PERSON_LABELS;
     //$participants = $reservation->
-    $participants = $reservation->getParticipants();
+    $participants = $reservation->getAllParticipants();
     $participants->transform(fn($p, $idx) => (object)[
         ...$p->toArray(),
         'age'        => $p->getAgeAtDate($reservation->date_depart),
@@ -115,7 +116,6 @@ function page()
         'personLabels' => $personLabels,
         'participants' => $participants,
         'reserv_form'  => [],
-        'captchaImage' => CaptchaController::generateInlineImage(),
     ];
     function redirectWithAlertMessage($url, $alertMessage, $exit = true)
     {

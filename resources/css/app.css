@@ -1,74 +1,105 @@
-@tailwind base;
-@tailwind components;
+@tailwind base; /* resets and basic styles */
+@tailwind components; /* reusable components such as buttons */
 @tailwind utilities;
 
-:root {
---adn-orange: #f68630;
---adn-cyan: #01ccf4;
---adn-green: rgba(185, 202, 122);
+@layer base {
+    @font-face {
+        font-family: 'Open Sans';
+        src: url('@/../css/webfonts/open-sans.woff2') format('woff2');
+        font-weight: normal;
+        font-style: normal;
+    }
+    @font-face {
+        font-family: 'Open Sans';
+        src: url('@/../css/webfonts/open-sans.woff2') format('woff2');
+        font-weight: bold;
+        font-style: bold;
+    }
+
+    :root {
+        font-family: 'Open Sans';
+        --adn-orange: #f68630;
+        --adn-cyan: #01ccf4;
+        --adn-green: rgba(185, 202, 122);
+
+    }
+
+    .text-adn-orange {
+        color: var(--adn-orange);
+    }
+    .text-adn-cyan {
+        color: var(--adn-cyan);
+    }
+    .text-adn-green {
+        color: var(--adn-green);
+    }
+    .bg-adn-orange {
+        background-color: var(--adn-orange);
+    }
+    .bg-adn-cyan {
+        background-color: var(--adn-cyan);
+    }
+    .bg-adn-green {
+        background-color: var(--adn-green);
+    }
+
+    body {
+        font-family: 'Open Sans', Helvetica, Arial, sans-serif;
+    }
 }
 
-.text-adn-orange {
-color: var(--adn-orange);
-}
-.text-adn-cyan {
-color: var(--adn-cyan);
-}
-.text-adn-green {
-color: var(--adn-green);
+
+@layer components {
+
+    .btn-adn-primary {
+        @apply block w-fit bg-adn-orange text-white text-sm font-semibold uppercase py-5 px-5 text-center transition-all duration-1000;
+    }
+
+    .btn-adn-primary[disabled] {
+        @apply bg-neutral-300 cursor-not-allowed
+    }
+
+    .btn-adn-minor {
+        @apply block w-fit text-adn-orange bg-white text-sm font-normal py-5 px-5 text-center justify-center border border-[var(--adn-orange)];
+    }
+
+    .form-ctl {
+        @apply block w-full p-1.5 text-base leading-6 text-gray-700 bg-white
+            border border-gray-300 rounded-md
+            transition duration-150 ease-in-out
+            focus:border-gray-500 focus:ring-0
+    }
+
+    .input-error {
+        @apply text-sm text-red-500 dark:text-red-400
+    }
+
 }
 
-.btn-adn-primary {
-@apply block w-fit bg-[var(--adn-orange)] text-white text-sm font-semibold uppercase py-5 px-5 text-center
-}
-
-.btn-adn-minor {
-@apply block w-fit text-[var(--adn-orange)] bg-white text-sm font-normal py-5 px-5 text-center
+@layer utilities {
+    .text-shadow {
+        text-shadow: 2px 2px 7px rgba(0, 0, 0, 0.27);
+    }
 }
 
 .tm-bg-white {
-@apply bg-white;
+    @apply bg-white;
 }
 .tm-bg-dark-blue {
-@apply bg-green-400;
+    @apply bg-green-400;
 }
 .tm-container {
-@apply container mx-auto px-4;
+    @apply container mx-auto px-4;
 }
 .tm-row {
-@apply flex items-center justify-between;
-}
-.navbar {
-@apply flex items-center justify-between w-full;
-}
-.navbar-brand {
-@apply flex items-center mr-auto;
-}
-.navbar-toggler {
-@apply lg:hidden p-2 border border-gray-300 rounded-md;
-}
-.navbar-collapse {
-@apply hidden lg:flex bg-white w-full lg:w-auto lg:flex-grow lg:items-center;
-}
-.navbar-nav {
-@apply flex flex-col lg:flex-row lg:ml-auto;
-}
-.nav-item {
-@apply cursor-pointer text-sm font-normal text-black;
-}
-.nav-link {
-@apply px-4 py-2 transition duration-300 ease-in-out;
-}
-.nav-link:hover,
-.nav-link:focus {
-@apply text-white bg-orange-500;
+    @apply flex items-center justify-between;
 }
 .footer-content {
-@apply text-center text-white;
+    @apply text-center text-white;
 }
 .footer-text {
-@apply text-sm leading-6 mt-5;
+    @apply text-sm leading-6 mt-5;
 }
 .footer-bold {
-@apply text-sm font-bold leading-6 mt-1 mb-4;
+    @apply text-sm font-bold leading-6 mt-1 mb-4;
 }

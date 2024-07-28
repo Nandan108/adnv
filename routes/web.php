@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\Booking\CaptchaController;
 use App\Http\Controllers\Booking\IndexController as BookingIndexController;
 use App\Http\Controllers\Booking\ReservationController;
 use App\Http\Controllers\LegacyController;
@@ -37,32 +36,27 @@ Route::domain($domains['admin'])->group(function () {
 })->middleware(ServeLegacyAminFiles::class);
 
 
-Route::domain($domains['booking'])->group(function () {
+//Route::domain($domains['booking'])->group(function () {
     Route::get('/', [BookingIndexController::class, 'index']);
 
-
-    Route::prefix('reservations/')->controller(ReservationController::class)->group(function () {
+    Route::prefix('reservation/')->controller(ReservationController::class)->group(function () {
         Route::post('init', 'initializeReservation')->name('reservation.init');
 
-        Route::get('{reservation}/show', 'show')->name('reservation.show');
         Route::get('quote/{quote}/show', 'showQuote')->name('reservation.quote.show');
 
-        Route::put('{reservation}/updateTraveler/{travelerIdx}', 'updateTraveler')->name('reservation.updateTraveler');
+        Route::put('{reservation}/updateTraveler/{travelerIdx}', 'updateTraveler')
+            ->withoutMiddleware(VerifyCsrfToken::class)->name('reservation.updateTraveler');
+
         Route::post('{reservation}/confirm', 'confirmReservation')->name('reservation.submit');
 
+        Route::get('{reservation}/legacy-show', 'legacyShow')->name('reservation.legacy-show');
+        Route::get('{reservation}/show', 'show')->name('reservation.show');
+        Route::get('show/{reservation}', 'show')->name('reservation.show2');
+        Route::get('{reservation}', 'show')->name('reservation.show3');
 
     });
 
-    // Route::get('/reservation', function () {
-    //     return inertia('Index/SomePage');
-    // })->name('some-page');
-
-    Route::prefix('captcha/')->controller(CaptchaController::class)->group(function () {
-        Route::get('new', 'getNewCaptchaImage');
-        Route::get('check/{code}', 'check');
-    });
-
-});
+//});
 
 
 Route::any('/{any}', [LegacyController::class, 'handleLegacyRequest'])

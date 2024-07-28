@@ -1,0 +1,238 @@
+.divTable.blueTable .divTableHeading .divTableHead,
+.divTable.blueTable .divTableBody .divTableCell {
+  width: 11px;
+}
+
+/* Miscellaneous */
+.divTableCell {
+  text-wrap: nowrap;
+}
+.divTable.inline .divTableCell,
+.divTable.inline .divTableHead {
+  text-wrap: nowrap;
+  padding: 0.2rem 0.5rem;
+}
+
+.divTableCell .disabled {
+  color: #aaa;
+}
+
+.text_montant {
+  padding: 20px;
+  text-align: right;
+  font-size: 12px;
+}
+
+.chf {
+  width: 12%;
+}
+
+.display_none_1 {
+  display: none;
+}
+
+@media (max-width: 576px) {
+  .display_none {
+    display: none;
+  }
+
+  .text_montant {
+    padding: 10px;
+    text-align: right;
+    font-size: 12px;
+  }
+
+  .chf {
+    width: 25% !important;
+  }
+}
+
+.decimal {
+  margin: 0 -0.2em;
+}
+
+.whole {
+  min-width: 5ch;
+  display: inline-flex;
+  justify-content: right;
+  text-align: right;
+}
+
+.fractional {
+  display: inline-flex;
+  text-align: left;
+  min-width: 4ch;
+}
+
+.texte_icone > h4 {
+  margin-top: 2em;
+}
+
+.slide > .slide-content {
+  transition: max-height 0.5s;
+  max-height: 0;
+  overflow: hidden;
+}
+
+.slide-down-650 > .slide-content {
+  max-height: 650px;
+}
+
+.slide-down-350 > .slide-content {
+  max-height: 350px;
+}
+
+.form-control {
+  padding: 0.4rem 0.7rem;
+  font-size: 14px;
+}
+
+.Price {
+  background: #f2f2f2;
+  padding: 15px;
+  margin: 2px;
+  text-align: center;
+}
+
+.Price h1 {
+  font-size: 20px;
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.Price h4 {
+  font-size: 16px;
+}
+
+.Price h2 {
+  font-size: 40px;
+}
+
+.ombre {
+  background: transparent /*url("img/formulairehotel.png")*/ no-repeat scroll 0% 0%;
+  height: 77px;
+  position: relative;
+  top: -136px;
+  z-index: -9;
+}
+
+label.radiobutton {
+  cursor: pointer;
+  font-size: 13px;
+  font-family: Arial, "Arial Unicode MS", Helvetica, sans-serif;
+  font-weight: normal;
+  font-style: normal;
+  line-height: 16px;
+  display: inline-block;
+  color: #364049 !important;
+  position: relative;
+}
+
+label.radiobutton::before {
+  background: #fafafa none repeat scroll 0% 0%;
+  border-radius: 8px;
+  border: 2px solid #e2341d;
+  margin: 0px auto;
+  width: 16px;
+  height: 16px;
+  display: inline-block;
+  vertical-align: top;
+  content: " ";
+}
+
+label.radiobutton input[type="radio"] {
+  display: none;
+}
+
+.radiobutton > input[type="radio"] {
+  vertical-align: baseline;
+  margin: 0px 5px 0px 0px;
+}
+
+label.radiobutton.checked:after {
+  content: url("images/radiobuttonicon.png");
+  position: absolute;
+  line-height: 12px;
+  left: 2px;
+  top: 2px;
+}
+
+input[type="radio"] {
+  width: 10px !important;
+  margin: 0px !important;
+  margin-bottom: 10px !important;
+}
+
+select {
+  border: 1px solid #92a5ac;
+  color: #92a5ac;
+  border-radius: 2px;
+}
+
+p {
+  margin-bottom: 5px;
+}
+
+label.chk > input[type="checkbox"] {
+  display: none;
+}
+label.chk > input[type="checkbox"] + *::before {
+  content: "";
+  display: inline-block;
+  vertical-align: bottom;
+  width: 1.2rem;
+  height: 1.2rem;
+  font-weight: bold;
+  border-radius: 10%;
+  border-style: solid;
+  border-width: 0.1rem;
+  border-color: gray;
+  margin-right: 4px;
+}
+label.chk > input[type="checkbox"]:checked + *::before {
+  content: "✓";
+  color: white;
+  text-align: center;
+  background: var(--adn-cyan);
+  border-color: var(--adn-cyan);
+  border-radius: 2px;
+
+}
+/*label > input[type="checkbox"]:checked + * {
+  color: teal;
+}*/
+
+.checkbox_group {
+  display: block;
+  width: 100%;
+  margin-bottom: 0px;
+  margin-left: 5px;
+  margin-top: 2px;
+}
+
+.ui-tabs .ui-tabs-nav .ui-tabs-anchor {
+  text-align: center;
+}
+
+.ui-tabs-anchor span {
+  text-align: center;
+  font-weight: 1000;
+  font-size: 10px;
+}
+
+.message-extra {
+  background: rgba(0, 0, 0, 0.6);
+  position: fixed;
+  z-index: 9999999999;
+  width: 100%;
+  top: 0;
+  left: 0;
+  bottom: 0;
+}
+
+b,
+strong {
+  font-weight: bold;
+}
+

@@ -9,7 +9,6 @@
         "barryvdh/laravel-dompdf": "^2.2",
         "components/font-awesome": "^6.5",
         "elibyy/tcpdf-laravel": "^11.1",
-        "gregwar/captcha": "^1.2",
         "harvesthq/chosen": "^1.8",
         "inertiajs/inertia-laravel": "^1.2",
         "laravel/framework": "^11.9",

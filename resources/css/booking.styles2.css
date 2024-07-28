@@ -1,0 +1,96 @@
+/* Default mobile styles */
+.ie-container-width-fix-2 {
+    @apply w-full py-5;
+}
+.container_pp .section-heading {
+    @apply font-extrabold mb-0 mt-[-30px] text-[18px];
+}
+.container_pp .ie-h-align-center-fix {
+    @apply max-w-full !important;
+}
+
+.container_list_hotel h3 {
+    @apply text-[20px];
+}
+
+#recher {
+    @apply w-[97%] bg-[#f4f4f4] border-none text-xs font-light p-2.5 m-2.5;
+}
+
+.liste_hotel {
+    @apply my-2.5;
+}
+
+.tab_crea {
+    @apply p-2.5 w-full border border-[#ccc] text-center shadow-md rounded-tr-md text-black font-bold;
+}
+
+.tab_crea:hover {
+    @apply bg-[#f4f4f4];
+}
+
+.crea {
+    @apply px-1;
+}
+
+.corp-crea {
+    @apply flex flex-col p-2.5 gap-2.5 bg-[#f4f4f4] top-2.5 left-0.5;
+}
+
+#afficher_devis {
+    @apply hidden;
+}
+
+.texte_icone h4 {
+    @apply text-white font-bold uppercase text-[10px] p-2 w-full bg-[#f68730] mt-2.5;
+}
+.texte_icone .icone {
+    @apply bg-black p-3.5 text-white rounded-tr-md rounded-br-md z-10;
+}
+.texte_icone i {
+    @apply text-[15px];
+}
+.texte_icone .texte {
+    @apply bg-none p-1 text-white z-0 left-[-1px] relative;
+}
+
+.listecontrole p {
+    @apply text-xs font-normal text-black leading-[1.25rem] mb-0;
+}
+
+.securiterobot {
+    @apply text-[2.5rem] bg-[#ccc] p-2.5 text-white shadow-md;
+}
+
+.bouton .affiche2 {
+    @apply hidden;
+}
+
+.container_pp > .container {
+    @apply p-4 max-w-full md:mx-10 lg:max-w-[1140px] w-auto;
+}
+
+/* Styles for screens 768px and larger */
+@screen md {
+    .ie-container-width-fix-2 {
+        @apply w-2/3;
+    }
+    #container_pp .section-heading {
+        @apply mb-[100px] text-[26px];
+    }
+    #container_pp .ie-h-align-center-fix {
+        @apply max-w-[90%] !important;
+    }
+    .container_list_hotel h3 {
+        @apply text-[30px];
+    }
+    #recher {
+        @apply w-[103%] m-0;
+    }
+    .liste_hotel {
+        @apply m-4;
+    }
+    #afficher_devis {
+        @apply block;
+    }
+}

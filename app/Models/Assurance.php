@@ -33,7 +33,7 @@ class Assurance extends Model
 
     public function prix($total) {
         if ($this->duree === 'voyage') {
-            return max($this->prix_minimum, round(($total * $this->pourcentage / 100), 1));
+            return max($this->prix_minimum, round(($total * $this->pourcentage / 100)));
         } else {
             return $this->prix_assurance;
         }

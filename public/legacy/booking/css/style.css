@@ -129,9 +129,6 @@
         font-size: 15px;
         padding: 10px;
     }
-    .tm-section-down-arrow {
-        display: none;
-    }
     #container_pp .section-heading {
         font-weight: 1000;
         margin-bottom: 0px;
@@ -344,9 +341,6 @@
     .tm-section-title {
         font-size: 15px;
         padding: 10px;
-    }
-    .tm-section-down-arrow {
-        display: none;
     }
     #container_pp .section-heading {
         font-weight: 1000;

@@ -22,7 +22,7 @@ function page()
         $nb_repas = $nb_prestations = $nb_tours = 0;
     }
 
-    $base_url_photo = "https://adnvoyage.com/admin/";
+    $base_url_photo = '/'; // "https://adnvoyage.com/admin/";
     $id_hotel       = $_GET['w'] ?? $_GET['h'] ?? null;
 
     if ($destination = $_GET['destination'] ?? false) {
@@ -160,7 +160,7 @@ function page()
         fn(Chambre $chambre) => $chambre->getPrixNuit(
             personCounts: $personCounts,
             agesEnfants: $ages,
-            datesVoyage: $datesHotel,
+            datesStay: $datesVoyage,
             prixParNuit: true,
         )
     )->keyBy('id');
@@ -371,7 +371,6 @@ function page()
         'base_url_photo'     => $base_url_photo,
     ];
 
-
     // MARK: Alpine Data
     ?>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -500,7 +499,7 @@ function page()
                                 return lignes;
                             }
                             getTotal(person, idx) {
-                                return this.source.brut.detail[person][idx] * this.nbNuits;
+                                return (this.source.brut.detail[person]?.[idx] ?? 0) * this.nbNuits;
                             }
                         }
                     );
@@ -1078,7 +1077,7 @@ function page()
         }
     </style>
 
-    <form name="form2" action="/reservations/init" method="post" x-ref='form' x-data='pageReservation'>
+    <form name="form2" action="<?=route('reservation.init')?>" method="post" x-ref='form' x-data='pageReservation'>
         <input type="hidden" name="_token" value="<?=csrf_token()?>" autocomplete="off">
         <input type="hidden" name="data" value="" />
 
@@ -1198,7 +1197,9 @@ function page()
                                                     <td style="font-size: 12px;">
                                                         <?= implode(',&nbsp; ', array_filter([
                                                             plural('# adulte|# adultes', $personCounts['adulte']),
-                                                            plural('|# enfant|# enfants', $personCounts['enfant']),
+                                                            plural('|# enfant|# enfants', $personCounts['enfant'])
+                                                                .($ages ? ' ('.collect($ages)->map(fn($age) => "$age ans")->join(', ').')'
+                                                                        : ''),
                                                             plural('|# bébé|# bébés', $personCounts['bebe']),
                                                         ])) ?>
                                                     </td>
@@ -1347,8 +1348,6 @@ function page()
         </div>
 
     </form>
-
-
 
     <script type="text/javascript">
         $(function () {

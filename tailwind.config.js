@@ -11,6 +11,9 @@ export default {
       fontSize: {
         '2.5xl': '1.75rem', // Custom size between 2xl and 3xl
       },
+      width: {
+        'half-minus-2': 'calc(50% - 0.5rem)',
+      }
     },
   },
   plugins: [

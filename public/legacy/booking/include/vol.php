@@ -28,7 +28,11 @@ return function ($pageData) {
                             dptDiffs: Object.values(vol.datesDeparts)
                                 .sort((a,b) => a.diff - b.diff)}
                             ">
-                            <template x-if="!vol.datesDeparts[0]"><div class="font-bold text-red mt-2">Désolé, ce vol n'est pas opéré les <span x-text='vol.nomJourDepart'></span>s.</div></template>
+                            <template x-if="!vol.datesDeparts[0]">
+                                <div class="font-bold text-red mt-2 text-red-700">
+                                    Désolé, ce vol n'est pas opéré les <span x-text='vol.nomJourDepart'></span>s.
+                                </div>
+                            </template>
                             <div style="line-height: 2.5em">
                                 <div>Jours opérés :</div>
                                 <div style="line-height: 2.5em;display: flex;flex-direction: row;flex-wrap: wrap;">

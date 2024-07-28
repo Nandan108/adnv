@@ -11,11 +11,10 @@ $redirUrl = URL::base64_decode($_GET['redir'] ?? '') ?: 'accueil.php';
 
 if (isset($_POST['remember'])) {
     if ($_POST['remember'] == "1") {
-        setcookie("member_login_HTTP", $_POST["pseudo"], time() + (10 * 3600 * 24 * 10));
-        setcookie("member_password_HTTP", $_POST["password"], time() + (10 * 3600 * 24 * 10));
+        cookie("member_login_HTTP", $_POST["pseudo"], time() + (10 * 3600 * 24 * 10));
     } else {
-        if (isset($_COOKIE['member_login_HTTP']))    setcookie("member_login_HTTP","");
-        if (isset($_COOKIE['member_password_HTTP'])) setcookie("member_password_HTTP","");
+        if (request()->cookie('member_login_HTTP'))
+            cookie()->forget("member_login_HTTP");
     }
 }
 
@@ -51,6 +50,7 @@ if (isset($_POST['valider'])) {
     }
 }
 
+$login = request()->cookie('member_login_HTTP');
 
 ?>
 <!DOCTYPE html>
@@ -123,16 +123,16 @@ if (isset($_POST['valider'])) {
                                     <div class="input-prepend" style="margin-bottom: 12px;">
 
                                         <span class="add-on" rel="tooltip" title="Username or E-Mail Address" data-placement="top"><i class="icon-envelope"></i></span>
-                                        <input type='text' class='span4' id='username' name="pseudo" style="width: 92%" value="<?php if (isset($_COOKIE["member_login_HTTP"])) {echo $_COOKIE["member_login_HTTP"]; } ?>" required/>
+                                        <input type='text' class='span4' id='username' name="pseudo" style="width: 92%" value="<?=$login?>" required/>
                                     </div>
 
                                     <div class="input-prepend" style="margin-bottom: 12px;">
 
                                         <span class="add-on"><i class="icon-key"></i></span>
-                                        <input type='password' class='span4' id='password' name="password"  style="width: 92%" value="<?php if (isset($_COOKIE["member_password_HTTP"])) {echo $_COOKIE["member_password_HTTP"]; } ?>"  required/>
+                                        <input type='password' class='span4' id='password' name="password"  style="width: 92%" required/>
                                     </div>
                                     <label class="checkbox" for='remember_me'>Se souvenir de moi
-                                        <input type='checkbox' id='remember_me' name="remember" value="1" <?php if (isset($_COOKIE["member_login_HTTP"])) {echo "checked"; } ?>
+                                        <input type='checkbox' id='remember_me' name="remember" value="1" <?=$login ? "checked" : '' ?>
                                                />
                                     </label>
                                 </div>

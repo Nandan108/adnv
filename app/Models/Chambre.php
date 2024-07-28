@@ -159,21 +159,44 @@ class Chambre extends Model
         '_bebe_1_net'           => 'float', // decimal(6,2) GENERATED ALWAYS AS (if(`nb_max_bebe`,`bebe_1_net`,NULL)) VIRTUAL,
     ];
 
+    protected $pricingSlotsMode = false;
+
     public function getPersonTypeMaxAges(): array
     {
-        return [
-            'bebe'   => $this->_age_max_bebe,
-            'enfant' => $this->_age_max_enfant,
+        return array_filter([
+            'bebe'         => $this->_age_max_bebe,
+            'petit_enfant' => $this->pricingSlotsMode ? $this->_age_max_petit_enfant : null,
+            'enfant'       => $this->_age_max_enfant,
+        ]);
+    }
+
+    public function getPersonSlots()
+    {
+        if ($this->pricingSlotsMode) {
+            $ampe = $this->_age_max_petit_enfant;
+            $nb_max_petit_enfant = $this->_age_max_bebe < $ampe && $ampe < $this->age_max_enfant ? 1 : 0;
+        }
+
+        $slots = [
+            'adulte' => $this->_nb_max_adulte,
+            'enfant' => $this->_nb_max_enfant,
+            'petit_enfant' => $nb_max_petit_enfant ?? 0,
+            'bebe'   => $this->_nb_max_bebe,
         ];
     }
 
-    public function getPersonSlots() {
-        return [
-            'adulte' => $this->_nb_max_adulte,
-            'enfant' => $this->_nb_max_enfant,
-            'bebe' => $this->_nb_max_bebe,
-        ];
+    public function getPersonCountsForPricing(Collection $voyageurs): Collection
+    {
+        $this->pricingSlotsMode = true;
+
+        $counts = $this->getVoyageursByPersonTypes($voyageurs)
+            ->map(fn($voyageurs) => count($voyageurs));
+
+        $this->pricingSlotsMode = false;
+
+        return $counts;
     }
+
 
     protected $with = ['monnaieObj'];
     public function monnaieObj()
@@ -264,7 +287,7 @@ class Chambre extends Model
     public $prixNuit = null;
     public function getPrixNuit(
         Collection $personCounts,
-        array $datesVoyage,
+        array $datesStay,
         $agesEnfants = [],
         $datesVente = null,
         $prixParNuit = false,
@@ -301,12 +324,12 @@ class Chambre extends Model
         }
 
         // by default, number of nights is calculated from trip start/end dates
-        $nbNuitsTotal = $nbNuits = round((strtotime($datesVoyage[1]) - strtotime($datesVoyage[0])) / (24 * 60 * 60));
+        $nbNuitsTotal = $nbNuits = round((strtotime($datesStay[1]) - strtotime($datesStay[0])) / (24 * 60 * 60));
 
         if (
             $nextPrixNuit = $this->getNextPrixNuit(
                 $personCounts,
-                $datesVoyage,
+                $datesStay,
                 $agesEnfants,
                 $datesVente,
                 $prixParNuit,
@@ -318,13 +341,13 @@ class Chambre extends Model
 
         // by default, sale date is today
         $datesVente ??= date('Y-m-d');
-        $remisePct  = $this->calcRemise($datesVente, $datesVoyage);
+        $remisePct  = $this->calcRemise($datesVente, $datesStay);
 
         $prixNuit = (object)[
             'id'          => $this->id_chambre,
             'counts'      => $personCounts,
             'agesEnfants' => $agesEnfants,
-            'dates'       => [$datesVoyage[0], min($this->fin_validite, $datesVoyage[1])],
+            'dates'       => [$datesStay[0], min($this->fin_validite, $datesStay[1])],
             'nbNuits'     => $nbNuits,
             'remisePct'   => $remisePct,
             'prixParNuit' => $prixParNuit,
@@ -372,7 +395,7 @@ class Chambre extends Model
                 'id'          => $this->id_chambre,
                 'counts'      => $personCounts,
                 'agesEnfants' => $agesEnfants,
-                'dates'       => $datesVoyage,
+                'dates'       => $datesStay,
                 'nbNuits'     => $nbNuitsTotal,
                 'remisePct'   => null,
                 'net'         => $mergeTwoPeriods('net'),
@@ -428,7 +451,7 @@ class Chambre extends Model
                 personCounts: $personCounts,
                 agesEnfants: $agesEnfants,
                 datesVente: $datesVente,
-                datesVoyage: [$nextDay, $datesVoyage[1]],
+                datesStay: [$nextDay, $datesVoyage[1]],
                 prixParNuit: $prixParNuit,
             );
         } else {

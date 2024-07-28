@@ -2,6 +2,7 @@
 namespace App\Models;
 
 use App\Traits\HasPersonTypes;
+use Carbon\CarbonImmutable;
 use DateTimeInterface;
 use Illuminate\Support\Carbon;
 use Illuminate\Database\Eloquent\Casts\AsArrayObject;
@@ -61,12 +62,39 @@ class Voyageur extends Model
 
     public function getIdxKeyAttribute(): string
     {
-        return (int)$this->adulte . '-' . $this->idx;
+        return (int)(!$this->adulte) . '-' . $this->idx;
     }
 
     public function getAgeAttribute(): int
     {
         return $this->getAgeAtDate(self::$debut_voyage ?? date('Y-m-d'));
+    }
+
+    public function getBirthdateMinMaxAttribute(): array
+    {
+        $tripStart         = new CarbonImmutable(self::$debut_voyage);
+        [$minAge, $maxAge] = $this->age < 2 ? [0, 1] : [$this->age, $this->age];
+
+        $minBirthdate = $tripStart->subYears($maxAge + 1)->addDay()->format('Y-m-d');
+        $maxBirthdate = $tripStart->subYears($minAge)->format('Y-m-d');
+
+        return [$minBirthdate, $maxBirthdate];
+    }
+
+    /**
+     * This write-only attribute is an alternative way to set the birthdate. Given an age,
+     * it will set the birthdate value to the earliest date that gives that age
+     * at departure date.
+     * @param mixed $age
+     * @return void
+     */
+    public function setAgeAtTripStartAttribute($age)
+    {
+        // if age is zero years, set it to 1yo (maximum age for 'baby' tarif on airlines)
+        if (!$age) $age = 1;
+        // calculate the minimum birthdate for that age at trip start date
+        $birthdate            = (new Carbon(self::$debut_voyage))->subYears($age + 1)->addDay();
+        $this->date_naissance = $birthdate;
     }
 
     public function getAgeAtDate(string $date, $adultAge = 99): int

@@ -21,8 +21,7 @@ return function ($pageData) {
             <hr>
         </div>
         <div class='flex flex-row gap-7' style='margin-bottom: 1rem'>
-            <img class="photo" title="Classic room patio view" alt="Classic room patio view"
-                x-bind:src="'<?= $pageData['base_url_photo'] ?>'+prestation.photo" style='flex:0'>
+            <img class="photo" x-bind:src="'<?= $pageData['base_url_photo'] ?>'+prestation.photo" style='flex:0'>
             <div style='flex:1;align-self:top;font-size: 14px;'>
                 <strong>Tarif applicable</strong>
                     du <span x-text='date_format(prestation.debut_validite)'></span>

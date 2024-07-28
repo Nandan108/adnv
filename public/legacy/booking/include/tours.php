@@ -27,8 +27,8 @@ return function ($pageData) {
                 </div>
                 <div class='flex flex-col gap-7' style='flex:1;align-self:top;font-size: 14px; align-self: center'>
                     <div>
-                        <strong>Tarif applicable </strong> &nbsp; du <span x-text='tour.debut_validite'></span> au <span
-                            x-text='tour.fin_validite'></span><br>
+                        <strong>Tarif applicable </strong> &nbsp; du <span x-text='date_format(tour.debut_validite)'></span> au <span
+                            x-text='date_format(tour.fin_validite)'></span><br>
                     </div>
                     <?php
                     // TODO: CACHER bouton détail sur mobile

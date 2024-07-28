@@ -154,7 +154,7 @@ $prestationsParType = $hotel->allPrestations
                                             <?= $i + 1 ?>
                                         </td>
 
-                                        <td><img src="<?php echo $prestation->photo; ?>" width="150" height="100"></td>
+                                        <td><img src="/<?= $prestation->photo ?>" width="150" height="100"></td>
 
                                         <td>
                                             <table class="tight prix_affiche">

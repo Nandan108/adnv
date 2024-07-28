@@ -173,8 +173,13 @@ $typesRepas = TypePrestation::where('is_meal', $estRepas ?? 0)->orderBy('name')-
                         <input type="hidden" name="id" value="<?php echo $presta->id; ?>">
                         <input type="hidden" name="photo" value="<?php echo $presta->photo; ?>">
                         <div class="control-group ">
-                            <label class="control-label">Changer photo</label>
+                            <label class="control-label" style="display:flex; flex-direction: column;">
+                                <img src="/<?=$presta->photo?>"
+                                    style="align-self: center;width:calc(100% - 2em);"
+                                    title="/<?=$presta->photo?>" />
+                            </label>
                             <div class="controls">
+                                <span>Changer photo</span><br />
                                 <input type="file" name="file" />
                             </div>
                         </div>

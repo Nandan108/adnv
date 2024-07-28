@@ -1819,7 +1819,7 @@ $id_total_repas_obligatoire .= '-'.$account5 -> id_repas_hotel;
  <div class="col-sm-3" style="padding: 10px;text-align:center;">
 
 <img src="<?php echo $url_photo2.$account5 -> photo; ?>"  style="width: 50px;height: 50px !important;border-radius: 100%;"><br>
-<p style="color:#f68730;font-size: 14px;font-weight: 1000;line-height: 20px;margin-top: 8px;"><span style="font-weight: 100"><?php echo $account50 -> nom_option ; ?></span><br>
+<p style="color:#f68730;font-size: 14px;font-weight: 1000;line-height: 20px;margin-top: 8px;"><span style="font-weight: 100"><?php echo $account50 -> name ; ?></span><br>
 
 <?php
 

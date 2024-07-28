@@ -1,5 +1,4 @@
-<style type='text/tailwindcss' >
-
+<style type='text/tailwindcss'>
 #index-content {
   background-image: url('/public/images/bg-img-1.jpg');
   min-height: 50vh;
@@ -12,10 +11,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.menuleft p {
-  @apply bg-white px-5 py-2.5 text-sm text-black mb-1 font-bold
 }
 
 label {
@@ -39,6 +34,7 @@ label {
   --dp-primary-color: var(--adn-orange) !important;
   --dp-range-between-dates-background-color: color-mix(in srgb, var(--adn-orange) 35%, transparent) !important;
 }
+
 .dp__input {
   --dp-text-color: #858789;
   --dp-input-padding: 12px 30px 12px 12px;
@@ -134,7 +130,15 @@ select:not([multiple]) {
 
 .tm-search-form .form-control {
   font-size: 0.8rem;
-  @apply p-3 pl-10
+  @apply p-3 pl-12
+}
+
+.menuleft p {
+  @apply px-5 py-2.5 text-sm text-black mb-1 font-bold
+}
+
+.menuleft p[disabled] {
+  @apply bg-slate-400 bg-opacity-50
 }
 
 /*
@@ -149,24 +153,23 @@ select:not([multiple]) {
 <template>
   <div id='index-content' class="tm-section tm-bg-img">
     <div class="container mx-auto lg:max-w-[75%]">
-      <div class="flex flex-col md:flex-row my-20 mx-10">
+      <div class="flex flex-col md:flex-row my-20 mx-5 sm:mx-10">
 
         <div class="flex flex-col w-full md:max-w-[25%] py-0 pr-1 menuleft">
-          <p id="menuhotels" class="menuhotel" style="background: var(--adn-orange)" @click="selectedTab = 'hotels'"
-            :class="{ 'md:-mr-1': selectedTab === 'hotels' }">
+          <p class="bg-adn-orange" @click="selectedTab = 'hotels'" :class="{ 'md:-mr-1': selectedTab === 'hotels' }">
             <a href="javascript:void(0)" class="menuleftlink" style="color: #FFF">
               <i class="fas fa-hotel text-lg mr-2"></i>
               Hôtels
             </a>
           </p>
-          <p id="menusejours" style="background: #01ccf4;" @click="selectedTab = 'packages'"
+          <p class="bg-adn-cyan" @click="selectedTab = 'packages'" disabled
             :class="{ 'md:-mr-1': selectedTab === 'packages' }">
             <a href="javascript:void(0)" class="menuleftlink" style="color: #FFF">
               <i class="fas fa-calendar text-lg mr-2"></i>
               Séjours
             </a>
           </p>
-          <p id="menucircuits" style="background: #b9ca7a;" @click="selectedTab = 'circuits'"
+          <p class="bg-adn-green" @click="selectedTab = 'circuits'" disabled
             :class="{ 'md:-mr-1': selectedTab === 'circuits' }">
             <a href="javascript:void(0)" class="menuleftlink" style="color: #FFF">
               <i class="fas fa-retweet text-lg mr-2"></i>
@@ -209,8 +212,8 @@ select:not([multiple]) {
                 <label @click="$refs.datepicker.openMenu()">Dates de l'aller et du retour</label>
                 <div class="tm-form-element tm-form-element-50">
                   <VueDatePicker ref='datepicker' id="hotel_datepicker" v-model="formData.dateRange" auto-apply
-                    prevent-min-max-navigation :enable-time-picker="false" model-type="yyyy-MM-dd"
-                    format='dd MMMM yyyy' :format-locale="dp.fr_locale" locale="fr" :range="dp.rangeConfig"
+                    prevent-min-max-navigation :enable-time-picker="false" model-type="yyyy-MM-dd" format='dd MMMM yyyy'
+                    :format-locale="dp.fr_locale" locale="fr" :range="dp.rangeConfig"
                     :multi-calendars="{ solo: false, static: true, count: 2 }" :min-date="dp.rangeConfig.minDate"
                     :max-date="dp.rangeConfig.maxDate" :disabled-week-days="dp.disabledWeekDays"
                     @update:model-value="dp.handleUpdate" @range-start="dp.handleRangeStart"
@@ -260,13 +263,11 @@ select:not([multiple]) {
               </div>
 
               <div class="flex flex-row flex-wrap items-center mt-5 justify-start w-full gap-x-5">
-                  <a href="#" class="btn-adn-primary text-[85%] w-full sm:w-fit"
-                    @click.prevent="hotelSearchFormSubmit()">
-                    Lancer la recherche
-                  </a>
-                  <a href="https://adnvoyage.com/tous-nos-hotels/"
-                    class="btn-adn-minor px-0 w-full sm:w-fit">Je
-                    veux voir la liste des tous les hôtels</a>
+                <a href="#" class="btn-adn-primary text-[85%] w-full sm:w-fit" @click.prevent="hotelSearchFormSubmit()">
+                  Lancer la recherche
+                </a>
+                <a href="https://adnvoyage.com/tous-nos-hotels/" class="btn-adn-minor px-0 w-full sm:w-fit">Je
+                  veux voir la liste des tous les hôtels</a>
               </div>
 
             </form>
@@ -289,7 +290,6 @@ select:not([multiple]) {
 
 <script setup>
 
-// TODO: style submit button
 // TODO: fix border-radius, focus styles, icon left-pad on datepicker
 // TODO: make package and Circuit tabs non-clickable
 
@@ -400,7 +400,7 @@ const hotelSearchFormSubmit = () => {
   }
 
   formData.value.ages_enfant.length = formData.value.nb_enfant;
-  formData.bebe &= formData.nb_adulte <= 2;
+  formData.value.bebe &= formData.value.nb_adulte <= 2;
 
   const queryString = new URLSearchParams({
     destination: formData.value.destination.code,
@@ -409,7 +409,7 @@ const hotelSearchFormSubmit = () => {
     adulte: formData.value.nb_adulte,
     enfant: formData.value.nb_enfant,
     ages: formData.value.ages_enfant.join(','),
-    bebe: formData.bebe,
+    bebe: formData.value.bebe,
   }).toString();
   window.location = '/hotels.php?' + queryString;
 }

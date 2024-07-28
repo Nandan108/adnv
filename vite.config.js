@@ -2,8 +2,20 @@ import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
 import vue from '@vitejs/plugin-vue';
 import path from 'path';
+import dotenv from 'dotenv'
+
+dotenv.config()
 
 export default defineConfig({
+    server: process.env.VITE_DEV_SERVER_URL
+        ? {
+            host: '0.0.0.0', // Listen on all addresses, including LAN
+            port: 5173,
+            hmr: {
+                host: new URL(process.env.VITE_DEV_SERVER_URL).hostname,
+            },
+        }
+        : undefined,
     plugins: [
         laravel({
             input: ['resources/css/app.css', 'resources/js/app.js'],

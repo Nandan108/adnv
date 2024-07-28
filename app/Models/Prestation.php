@@ -144,7 +144,7 @@ class Prestation extends Model
 
         $info = (object)[
             'id'           => $this->id,
-            'nom'          => $this->type->nom_option,
+            'nom'          => $this->type->name,
             'prestation'   => $this,
             'nbNuits'      => $nbNuits, // need this to compute repas totals
             'personCounts' => $personCounts->intersectByKeys($brut),

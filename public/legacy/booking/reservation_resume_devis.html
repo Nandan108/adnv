@@ -30,19 +30,20 @@
                 </div>
                 <div class="divTableCell even">
                     <div class="flex justify-center" x-html="chfHtml(tots.transfert)"></div>
-                    <template x-if="participant.typePerson !== participant.totals.typePerson.transfert">
-                        <div x-text="'(tarif '+personLabels[participant.totals.typePerson.transfert]+')'"></div>
+                    <template x-if="participant.totals.typePerson.transfert && participant.typePerson !== participant.totals.typePerson.transfert">
+                        <div x-data='{typeTarif: personLabels[participant.totals.typePerson.transfert]}'
+                            x-text="'(tarif '+personLabels[participant.totals.typePerson.transfert]+')'"></div>
                     </template>
                 </div>
                 <div class="divTableCell even">
                     <div class="flex justify-center" x-html="chfHtml(tots.visa)"></div>
-                    <template x-if="participant.typePerson !== participant.totals.typePerson.visa">
+                    <template x-if="participant.totals.typePerson.visa && participant.typePerson !== participant.totals.typePerson.visa">
                         <div x-text="'(tarif '+personLabels[participant.totals.typePerson.visa]+')'"></div>
                     </template>
                 </div>
                 <div class="divTableCell even">
                     <div class="flex justify-center" x-html="chfHtml(tots.chambre)"></div>
-                    <template x-if="participant.typePerson !== participant.totals.typePerson.chambre">
+                    <template x-if="participant.totals.typePerson.chambre && participant.typePerson !== participant.totals.typePerson.chambre">
                         <div x-text="'(tarif '+personLabels[participant.totals.typePerson.chambre]+')'"></div>
                     </template>
                 </div>
