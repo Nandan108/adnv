@@ -10,9 +10,7 @@ class LegacyController extends Controller
     public function handleLegacyRequest(Request $request)
     {
         $redir = $_GET['redir'] ?? null;
-        $request_app = preg_match('#(booking|admin)#', $_SERVER['HTTP_HOST'], $matches)
-            ? $matches[1]
-            : config('app.request_app');
+        $request_app = config('app.request_app');
 
         $requestPath = $request->getPathInfo();
 

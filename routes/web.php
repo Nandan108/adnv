@@ -17,10 +17,13 @@ $domains = [
 
 
 if (!config('app.production')) {
-    $domain = config('app.dev_domain');
-    $domains[$domain] = explode(':',$_SERVER['HTTP_HOST'] ?? '')[0] ?? null;
-    config(['app.request_app' => $domain]);
+    if (!($request_app = config('app.request_app'))) {
+        $request_app = config('app.dev_dflt_domain');
+        $domains[$request_app] = $domain = explode(':',$_SERVER['HTTP_HOST'] ?? '')[0] ?? null;
+        config(['app.request_app' => $domain]);
+    }
 }
+
 //dd(['domain' => $domain, config('app'), $_SERVER['HTTP_HOST'], $domains]);
 
 // Admin Subdomain Routes
@@ -36,7 +39,7 @@ Route::domain($domains['admin'])->group(function () {
 })->middleware(ServeLegacyAminFiles::class);
 
 
-//Route::domain($domains['booking'])->group(function () {
+Route::domain($domains['booking'])->group(function () {
     Route::get('/', [BookingIndexController::class, 'index']);
 
     Route::prefix('reservation/')->controller(ReservationController::class)->group(function () {
@@ -56,7 +59,7 @@ Route::domain($domains['admin'])->group(function () {
 
     });
 
-//});
+});
 
 
 Route::any('/{any}', [LegacyController::class, 'handleLegacyRequest'])
