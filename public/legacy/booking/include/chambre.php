@@ -17,7 +17,7 @@ return function ($pageData) {
             <div class='col-sm-3' style='flex-direction: column; padding-right: 0'>
                 <div style="text-align: center;font-size: 12px;color:#898989">
                     A partir de<br>
-                    <div class='price chf' x-text='chf(chambre.brut.detail.adulte[0], 2)' class='chf'></div>
+                    <div class='price chf' x-text='chf(Math.round(chambre.brut.detail.adulte[0]), 2)' class='chf'></div>
                     Par nuit et par personne<br>
                     <br>
                 </div>

@@ -173,15 +173,15 @@ class Chambre extends Model
     public function getPersonSlots()
     {
         if ($this->pricingSlotsMode) {
-            $ampe = $this->_age_max_petit_enfant;
+            $ampe                = $this->_age_max_petit_enfant;
             $nb_max_petit_enfant = $this->_age_max_bebe < $ampe && $ampe < $this->age_max_enfant ? 1 : 0;
         }
 
         $slots = [
-            'adulte' => $this->_nb_max_adulte,
-            'enfant' => $this->_nb_max_enfant,
+            'adulte'       => $this->_nb_max_adulte,
+            'enfant'       => $this->_nb_max_enfant,
             'petit_enfant' => $nb_max_petit_enfant ?? 0,
-            'bebe'   => $this->_nb_max_bebe,
+            'bebe'         => $this->_nb_max_bebe,
         ];
     }
 
@@ -326,18 +326,9 @@ class Chambre extends Model
         // by default, number of nights is calculated from trip start/end dates
         $nbNuitsTotal = $nbNuits = round((strtotime($datesStay[1]) - strtotime($datesStay[0])) / (24 * 60 * 60));
 
-        if (
-            $nextPrixNuit = $this->getNextPrixNuit(
-                $personCounts,
-                $datesStay,
-                $agesEnfants,
-                $datesVente,
-                $prixParNuit,
-            )
-        ) {
-            // adjust number of nights
-            $nbNuits -= $nextPrixNuit->nbNuits;
-        }
+        $nextPrixNuit = $this->getNextPrixNuit($personCounts, $datesStay, $agesEnfants, $datesVente, $prixParNuit);
+        // if there's a second period, adjust number of nights for the first period
+        $nbNuits -= $nextPrixNuit?->nbNuits ?? 0;
 
         // by default, sale date is today
         $datesVente ??= date('Y-m-d');
@@ -378,10 +369,10 @@ class Chambre extends Model
                     callback: function ($typePersonne) use ($prixNuit, $typePrix, $prixParNuit, $nextPrixNuit, $nbNuitsTotal) {
                         return array_map(
                             callback: function ($num) use ($prixNuit, $typePrix, $typePersonne, $prixParNuit, $nextPrixNuit, $nbNuitsTotal) {
-                                $val = round(($prixNuit->$typePrix->detail->$typePersonne[$num] * ($prixParNuit ? $prixNuit->nbNuits : 1) +
-                                    $nextPrixNuit->$typePrix->detail->$typePersonne[$num] * ($prixParNuit ? $nextPrixNuit->nbNuits : 1)) /
-                                    ($prixParNuit ? $nbNuitsTotal : 1), 2);
-                                return $val;
+                                $val =
+                                    $prixNuit->$typePrix->detail->$typePersonne[$num] * ($prixParNuit ? $prixNuit->nbNuits : 1) +
+                                    $nextPrixNuit->$typePrix->detail->$typePersonne[$num] * ($prixParNuit ? $nextPrixNuit->nbNuits : 1);
+                                return $prixParNuit ? $val / $nbNuitsTotal : ceil($val);
                             },
                         array: array_combine($keys = array_keys((array)$prixNuit->$typePrix->detail->$typePersonne), $keys),
                         );
@@ -412,7 +403,7 @@ class Chambre extends Model
         foreach ([$prix, ...($prix->details ?? [])] as $p) {
             foreach (['net', 'brut', 'sansRemise'] as $typePrix) {
                 $p->$typePrix->totals = (object)($tots = array_map(fn($arr) => array_sum($arr), (array)$p->$typePrix->detail));
-                $p->$typePrix->total  = round(array_sum($tots), 3);
+                $p->$typePrix->total  = array_sum($tots); //, 3);
             }
             $p->remisePct = round(1 - $p->brut->total / $p->sansRemise->total, 3);
         }
