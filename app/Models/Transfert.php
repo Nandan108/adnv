@@ -63,28 +63,32 @@ class Transfert extends Model
         'bebe_total',
     ];
 
-    public function aeroport() {
+    public function aeroport()
+    {
         return $this->belongsTo(Aeroport::class, 'dpt_code_aeroport', 'code_aeroport');
     }
 
-    public function hotel() {
+    public function hotel()
+    {
         return $this->belongsTo(Hotel::class, 'arv_id_hotel', 'id');
     }
 
     // TODO: rename field monaieObj -> code_monaie and relation monaieObj() -> monaie()
     protected $with = ['monnaieObj'];
-    public function monnaieObj() {
+    public function monnaieObj()
+    {
         return $this->belongsTo(Monnaie::class, 'monnaie', 'code');
     }
 
-    public function partenaire() {
+    public function partenaire()
+    {
         return $this->belongsTo(Partenaire::class, 'id_partenaire', 'id_partenaire');
     }
 
-    public function scopeValid($query, $date) {
+    public function scopeValid($query, $date)
+    {
         $query->whereRaw('? BETWEEN debut_validite AND fin_validite', [$date]);
     }
-
 
 
     //  'adulte_comm', // smallint(5) unsigned DEFAULT NULL,
@@ -100,7 +104,8 @@ class Transfert extends Model
     //  'bebe_a_net',     'bebe_a_brut',     'bebe_r_net',     'bebe_r_brut',     'bebe_total',
 
     protected $tarifs;
-    public function getTarifs() {
+    public function getTarifs()
+    {
         if (isset($this->tarifs)) return $this->tarifs;
 
         $tauxChange = $this->mmonnaie->taux;
@@ -135,53 +140,26 @@ class Transfert extends Model
         return $this->tarifs = $tarifs;
     }
 
-    public function getTarif($person, $idx = null) {
+    public function getTarif($person, $idx = null)
+    {
         $tarifs = $this->getTarifs();
         $idx ??= 1;
         if ($this->type === 'car') {
             $idx = min(4, $idx);
-            return match($person) {
-                'adulte' => $tarifs["adulte_$idx"],
-                'enfant','bebe' => $tarifs[$person],
+            return match ($person) {
+                'adulte'        => $tarifs["adulte_$idx"],
+                'enfant', 'bebe' => $tarifs[$person],
             };
         } else {
-            return match($person) {
-                'adulte' => $tarifs['adulte_1'],
-                'enfant','bebe' => $tarifs[$person],
+            return match ($person) {
+                'adulte'        => $tarifs['adulte_1'],
+                'enfant', 'bebe' => $tarifs[$person],
             };
         }
     }
 
-    // /**
-    //  * @param array $passagers [
-    //  *      'adulte' => ['count' => int],
-    //  *      'enfant' => ['count' => int, age => [int...]],
-    //  *      'bebe' => ['count' => int, ages => [int...]],
-    //  * ],
-    //  * @return
-    //  */
-    // public function getTotals(array $passagers) {
-    //     $commOuFrais = $this->type === 'car' ? 'frais_pec' : 'comm';
-    //     $fields = ['net', 'brut', $commOuFrais, 'total'];
-
-    //     $tarifs = $this->getTarifs();
-    //     $totals[] = ['totals' => $grandTotals = (object)array_fill_keys($fields, 0)];
-
-    //     foreach ($passagers as $type => $passager) {
-    //         $tarifName = $type === 'adulte'
-    //             ? 'adulte_'.($this->type === 'car' ? max($passager['count'], 4) : 1)
-    //             : $type;
-    //         $passTot = $totals[$type] = (object)$tarifs[$tarifName];
-
-    //         foreach ($fields as $field) {
-    //             $passTot->$field = $passTot->{"unit_$field"} * $passager['count'];
-    //             $grandTotals->$field += $passTot[$field];
-    //         }
-    //     }
-    //     return $totals;
-    // }
-
-    public function calcUnitTotal($person, $count) {
+    public function calcUnitTotal($person, $count)
+    {
         $tauxChange = $this->monnaieObj->taux;
 
         if ($this->type === 'car') {
@@ -194,16 +172,17 @@ class Transfert extends Model
             return ceil($net * $tauxChange * (1 + $commPct));
         } else {
             $net = $person === 'adulte'
-                ? $this->adult_a_net_1
+                ? $this->adulte_a_net_1
                 : $this->{"{$person}_a_net"};
 
-            $flatComm = (1 + $this->{"{$person}_comm"} / 100);
+            $flatComm = $this->{"{$person}_comm"};
 
             return ceil($net * $tauxChange + $flatComm);
         }
     }
 
-    public function getPrixTransfert(Collection $personCounts, $nomHotel = null) {
+    public function getPrixTransfert(Collection $personCounts, $nomHotel = null)
+    {
         $totals = $personCounts->map(
             fn($count, $person) => $this->calcUnitTotal($person, $count)
         );
@@ -216,8 +195,7 @@ class Transfert extends Model
             'code_apt'   => $this->dpt_code_aeroport,
             'partenaire' => $this->partenaire,
             'totals'     => $totals,
-            'total'      => $totals->reduce(fn($acc, $tot, $person)      =>
-                $acc + $tot * $personCounts[$person], 0),
+            'total'      => $totals->map(fn($tot, $person) => $tot * $personCounts[$person])->sum()
         ];
 
         return $prixVol;
