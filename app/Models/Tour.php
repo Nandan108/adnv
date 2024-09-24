@@ -1,6 +1,7 @@
 <?php
 namespace App\Models;
 
+use App\Casts\NullFloat;
 use App\Traits\HasPersonTypes;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -48,7 +49,17 @@ class Tour extends Model
         // 'prix_total_bebe', // decimal(7,2) NOT NULL DEFAULT 0.00,
     ];
 
-    protected function joursDepart(): Attribute {
+    protected $casts = [
+        'taux_commission' => 'int',
+        'prix_net_adulte' => NullFloat::class,
+        'prix_net_enfant' => NullFloat::class,
+        'prix_net_bebe'   => NullFloat::class,
+        'debut_validite'  => 'datetime:Y-m-d',
+        'fin_validite'    => 'datetime:Y-m-d',
+    ];
+
+    protected function joursDepart(): Attribute
+    {
         return Attribute::make(
             get: fn($value) => array_map(fn($j) => (int)$j, array_filter(explode(',', $value))),
             set: fn($value) => implode(',', $value),
@@ -56,23 +67,28 @@ class Tour extends Model
     }
 
     protected $with = ['monnaieObj'];
-    public function monnaieObj() {
+    public function monnaieObj()
+    {
         return $this->belongsTo(Monnaie::class, 'monnaie', 'code');
     }
 
-    public function lieu() {
+    public function lieu()
+    {
         return $this->belongsTo(Lieu::class, 'id_lieu', 'id_lieu');
     }
 
-    public function type() {
+    public function type()
+    {
         return $this->belongsTo(TourType::class, 'id_type_tour', 'id_type');
     }
 
-    public function partenaire() {
+    public function partenaire()
+    {
         return $this->belongsTo(Partenaire::class, 'id_partenaire');
     }
 
-    public function scopeValid($query, $date) {
+    public function scopeValid($query, $date)
+    {
         // TODO: Take $date_debut_voyage and $date_fin_voyage as arguments, and take in account `jours_depart`
         $query->whereRaw('? BETWEEN debut_validite AND fin_validite', [$date]);
     }
@@ -88,7 +104,8 @@ class Tour extends Model
     // id_lieu
     // id_type_tour
 
-    public function calcTotal($person) {
+    public function calcTotal($person)
+    {
         return ceil(
             $this->{"prix_net_$person"} *
             ($this->monnaie ? $this->monnaieObj->taux : $this->taux_change) *
@@ -97,7 +114,8 @@ class Tour extends Model
     }
 
     // TODO: rename getPrixTour() to getInfoTour()
-    public function getPrixTour(Collection $personCounts = null) {
+    public function getPrixTour(Collection $personCounts = null)
+    {
         if ($this->relationLoaded('participants')) {
             $personCounts = $this->participants->personCounts;
         }

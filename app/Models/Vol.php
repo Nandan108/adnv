@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Support\Collection;
 
+// TODO: rename to Flight
+// TODO: rename table to flight
 class Vol extends Model
 {
     use HasPersonTypes;
@@ -17,9 +19,10 @@ class Vol extends Model
         'vol_seul', // tinyint(3) unsigned NOT NULL DEFAULT 0 COMMENT 'Indique si le vol est à utiliser comme vol seul plutôt que dans un séjour',
         'titre', // varchar(100) NOT NULL,
         'id_company', // int(10) NOT NULL,
+        // TODO: Rename field to `flight_type`. Rename 'Airline' to 'Commercial'.
         'class_reservation', // enum('Airline','Charter','Contingent') NOT NULL,
         'sans_bagage', // tinyint(3) unsigned NOT NULL DEFAULT 0 COMMENT 'pour les vols seul',
-        'code_monnaie', // char(3) DEFAULT NULL,
+        'monnaie', // char(3) DEFAULT NULL,
         'taux_change', // float NOT NULL DEFAULT 0,
         'jours_depart', // set('1','2','3','4','5','6','7') NOT NULL DEFAULT '1,2,3,4,5,6,7',
         'code_apt_depart', // char(3) NOT NULL,

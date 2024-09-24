@@ -5,25 +5,36 @@ use Illuminate\Database\Eloquent\Casts\AsArrayObject;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\CommercialdocInfo as DocInfo;
+use App\Enums\CommercialdocInfoType;
+use Mavinoo\Batch\Traits\HasBatch;
 
 class CommercialdocInfo extends Model
 {
-    use HasFactory;
+    use HasFactory, HasBatch;
 
     protected $table = 'commercialdoc_infos';
     protected $fillable = [
-        'commercialdoc_id',
-        'type',
-        'data',
+        'commercialdoc_id', // FK int
+        'type', // enum
+        'data', // json
+        'ord', // tinying unsigned
     ];
 
     protected $casts = [
         'data' => AsArrayObject::class,
+        'type' => CommercialdocInfoType::class,
     ];
+
+    protected static $type;
+
+    public function __construct(array $attributes = []) {
+        parent::__construct($attributes);
+        $this->type = static::$type;
+    }
 
     public function doc()
     {
-        return $this->belongsTo(Commercialdoc::class);
+        return $this->belongsTo(Commercialdoc::class, 'commercialdoc_id');
     }
 
     static protected function cloneFrom(self $source)
@@ -47,17 +58,15 @@ class CommercialdocInfo extends Model
         return $newInstance;
     }
 
+    public function make($attributes) {
+        $this->fill($attributes);
+    }
+
     // Method to create the appropriate subclass instance
     public function toSpecificType()
     {
-        $class = match ($this->type) {
-            'header_res_id'      => DocInfo\HeaderResId::class,
-            'flight_line'        => DocInfo\FlightLine::class,
-            'transfert_line'     => DocInfo\TransfertLine::class,
-            'hotel_line'         => DocInfo\HotelLine::class,
-            'transfert_comments' => DocInfo\TransfertComments::class,
-            'trip_info'          => DocInfo\Trip::class,
-        };
-        return $class::cloneFrom($this);
+        $specificSubclass = $this->type->className();
+
+        return $specificSubclass::cloneFrom($this);
     }
 }

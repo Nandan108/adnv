@@ -1,0 +1,88 @@
+## Bugs:
+Pas finis:
+
+reservation.php:
+    Visa column shows (tarif undefined)
+    Prix assurance pas mis à jour après choix
+    Prix taxes aéroport ()
+    Visa should be hidden if visas are not mandatory
+    Unrequested baby added - FIXED
+    handle villas and suite prices correctly
+    Show children's ages beside their firstname
+    Stay start date (and count(nights)) may depend on chosen flight. Default = diff(ret-dep) - flights.max(f => f[j+1])
+
+hotel_detail.php:
+    handle villas and suite prices correctly - FIXED
+    sort rooms by price - FIXED
+    Repas name not shown correctly in fly-out - FIXED
+    We have flights to places without hotels.
+        Need to add lone flights sell page, otherwise we can't sell those.
+        If we do, then we can remove the possibility to buy a flight without a hotel stay in booking/hotel_detail.
+
+Question:
+    Est-ce qu'on permet des voyages sans hotel (vol seul) ?
+    Si oui, est-ce qu'on permet vol + transfert (sans hotel) ?
+    Les transferts sont souvant organisés par l'hotel...
+
+Quote:
+    Send html email - DONE
+    Create interface to create invoice with additional info + send invoice - DONE
+    Create Invoice pdf and attach to email
+    Add payment system
+
+admin:
+    move all images from public/legacy/admin/upload to /storage/app/public/legacy
+        add symlink from public/legacy/admin/upload
+        add symlink from public/legacy/booking/upload/images
+        update booking to access images from /images/ rather than https://adnvoyage.com/admin/upload/
+
+app/AdminLegacy/CalculateurSejour.php:123:        // TODO: à corriger: les dates chambre.(debut|fin)_(remise|remise2) sont des VARCHAR au lieu de DATE.
+app/AdminLegacy/CalculateurSejour.php:124:        // TODO: remise est TOUJOURS un %, donc les champs unite et unite2 sont a supprimer.
+app/AdminLegacy/CalculateurVol.php:129:        // TODO: à corriger: les dates chambre.(debut|fin)_(remise|remise2) sont des VARCHAR au lieu de DATE.
+app/AdminLegacy/CalculateurVol.php:130:        // TODO: remise est TOUJOURS un %, donc les champs unite et unite2 sont a supprimer.
+app/Models/Chambre.php:196:    // TODO: This class extends Awobaz\Compoships\Database\Eloquent\Model for one reason:
+app/Models/HotelPrestation.php:17:        // TODO: fix bad name - !!! pas un ID - c'est le nom de la prestation
+app/Models/HotelPrestation.php:64:        // TODO: handle case where the stay ends AFTER the validity limits of the meal services
+app/Models/HotelPrestation.php:65:        // TODO: adapt number of meals according to meal type ??
+app/Models/HotelPrestation.php:67:        // TODO: use hotel's stay dates, which may be different in case of overnight flight.
+app/Models/Pays.php:27:       'obligatoire', // TODO: rename to `visa_obligatoire` or just remove (I don't think it's in use)
+app/Models/Prestation.php:90:    // TODO: That is from the hotel's room at the moment, but should be moved to the hotel itself.
+app/Models/Prestation.php:131:        // TODO: handle case where the stay ends AFTER the validity limits of the meal services
+app/Models/Prestation.php:132:        // TODO: adapt number of meals according to meal type ??
+app/Models/Reservation.php:39:        'status', // TODO: add to DB, make it an enum, and add self::const declarations for values
+app/Models/Reservation.php:42:        'remarques', // TODO: add this field in DB // text NULL
+app/Models/Reservation.php:402:                    // TODO: create and use attribute $this->date_debut_sejour
+app/Models/ReservationInfo.php:12:    // TODO: add timestamp fields;
+app/Models/Sejour.php:63:    // TODO: rename field monaieObj -> code_monaie and relation monaieObj() -> monaie()
+app/Models/Tour.php:37:        // TODO: fix misspelled field name (missing 'i' in accessibiltes)
+app/Models/Tour.php:40:        // TODO: ajouter champ age_minimum
+app/Models/Tour.php:44:        // TODO: drop prix_total_* calculated fields
+app/Models/Tour.php:76:        // TODO: Take $date_debut_voyage and $date_fin_voyage as arguments, and take in account `jours_depart`
+app/Models/Tour.php:99:    // TODO: rename getPrixTour() to getInfoTour()
+app/Models/Transfert.php:74:    // TODO: rename field monaieObj -> code_monaie and relation monaieObj() -> monaie()
+app/Models/Vol.php:46:        'Airline', // TODO: rename to "Commercial". Sold seat-by-seat
+app/Models/Vol.php:76:    // TODO: le champ devrait s'appeller code_monnaie
+app/Models/Vol.php:77:    // TODO: fix Monnaie set CHF for all vols in DB
+app/Models/Vol.php:78:    // TODO: fix admin/vol.php bouton Enregistrer doesn't seem to work
+app/Models/Vol.php:79:    // TODO: check create form (admin/vol.php?id=) make sure CHF is default
+public/legacy/admin/js/jquery/jquery-tablesorter.js:589:                // TODO: inline functions.
+public/legacy/admin/vol.php:108:        // TODO: supprimer ce champ. On ne devrait pas stocker le taux de change ailleurs que dans la table des monnaies.
+public/legacy/booking/hotel_detail.php:19:    // TODO: Question: I guess this is to hide choices for repas, prestation and tours on mobile. Why ?
+public/legacy/booking/hotel_detail.php:74:            //...['age_minimum',] // TODO: Check if this field is being used.
+public/legacy/booking/hotel_detail.php:155:    // TODO: $datesHotel[0] -= least($vols->arrive_next_day)
+public/legacy/booking/hotel_detail.php:156:    // TODO: datesHotel should be a front-end computed()
+public/legacy/booking/hotel_detail.php:189:        // TODO: Dynamically hide (un-select if needed) uncompatible transferts
+public/legacy/booking/hotel_detail.php:251:        'obligatoire' => !!($pays->visa_adulte + $pays->visa_enfant + $pays->visa_bebe), // TODO: remove field
+public/legacy/booking/hotel_detail.php:298:            // TODO:
+public/legacy/booking/hotel_detail.php:331:            // TODO: Question: pourquoi seulement 2 ?
+public/legacy/booking/hotel_detail.php:678:                // TODO: in case of J+1 flight arrival, room dates must start J+1
+public/legacy/booking/hotel_detail.php:689:                    // TODO: nbNuits should be based on hotel date start
+public/legacy/booking/hotel_detail.php:706:                    // TODO: nbNuits must be calculated, it's not the whole
+public/legacy/booking/hotels.php:51:    // TODO: make adjustements for "arrival-next-day" flights, hotel stay should start next day
+public/legacy/booking/hotels.php:52:    // TODO: check whether return-flight is also next day, sometimes or always.
+public/legacy/booking/include/tours.php:34:                    // TODO: CACHER bouton détail sur mobile
+public/legacy/booking/include/transfert.php:7:            <?php /* TODO: adapt icon to transport type: show different icons speedboat and hydroplane (hydravion) */?>
+public/legacy/booking/reservation.php:12:// TODO: Finish the reservation page
+resources/js/Pages/Booking/Index.vue:292:// TODO: style submit button
+resources/js/Pages/Booking/Index.vue:293:// TODO: fix border-radius, focus styles, icon left-pad on datepicker
+resources/js/Pages/Booking/Index.vue:294:// TODO: make package and Circuit tabs non-clickable

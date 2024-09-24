@@ -22,14 +22,14 @@ class Reservation extends Model
     use HasHashid, HashidRouting;
 
     protected $table = 'reservations';
-    protected $appends = ['hashid', 'md5Id'];
+    protected $appends = ['hashId', 'md5Id'];
     protected $fillable = [
         'code_pays', // destination
         'date_depart', // date de début du vol d'aller
         'date_retour', // date de début du vol de retour
         'nb_adulte', //	tinyint(3) unsigned NULL
         'ages_enfants', //	varchar(10) NULL
-        'nb_bebe', //	tinyint(3) unsigned NULL
+        //'nb_bebe', //	tinyint(3) unsigned NULL
         'id_prix_vol',
         'id_transfert',
         'id_chambre',
@@ -90,16 +90,56 @@ class Reservation extends Model
         return md5($this->id);
     }
 
+    public function getBabyCountAttribute(): int
+    {
+        return count(array_filter($this->ages_enfants, fn($age) => $age <= 1));
+    }
+
+    public function getUrlParamsAttribute(): array
+    {
+        if ($hotelId = $this->chambre?->id_hotel) {
+            $params = [
+                'h'          => $hotelId,
+                'du'         => $this->date_depart,
+                'au'         => $this->date_retour,
+                'nb_adultes' => $this->personCounts['adulte'],
+                'ages'       => $this->ages_enfants,
+                'nb_bebe'    => $this->babyCount,
+            ];
+        } else {
+            $params = [
+                'destination' => $this->code_pays,
+                'du'          => $this->date_depart,
+                'au'          => $this->date_retour,
+                'adulte'      => $this->personCounts['adulte'],
+                'ages'        => $this->ages_enfants,
+                'bebe'        => $this->babyCount,
+            ];
+        }
+        return $params;
+    }
+    public function getUrlAttribute(): string
+    {
+        $params = $this->urlParams;
+        $url    = ($params['h'] ?? false
+            ? '/hotel_detail.php'
+            : '/hotels.php') . '?' . http_build_query($params);
+        return $url;
+    }
+
     /**
      * A Collection: [ 'adulte' => int, 'enfant' => int, 'bebe' => int ]
      */
     public function getPersonCountsAttribute()
     {
-        return collect([
+        $agesEnfants = $this->ages_enfants;
+        $pc = collect([
             'adulte' => $this->nb_adulte,
             'bebe'   => count(array_filter($this->ages_enfants, fn($a) => $a <= 1)),
             'enfant' => count(array_filter($this->ages_enfants, fn($a) => $a > 1)),
         ]);
+
+        return $pc;
     }
 
     // attribute `ages_enfants` is a CSV list of integers
@@ -227,7 +267,7 @@ class Reservation extends Model
         BaseCollection $tours,
     ) {
         // add baby to kid's ages
-        if ($personCounts['bebe']) $agesEnfants[] = 1;
+        // if ($personCounts['bebe']) $agesEnfants[] = 1;
 
         $reservation = new Reservation([
             'code_pays'    => $codePays,
@@ -238,7 +278,7 @@ class Reservation extends Model
             'id_chambre'   => $chambre_id,
             'nb_chambres'  => 1, // hard-coded for now
             'nb_adulte'    => $personCounts['adulte'],
-            'nb_bebe'      => $personCounts['bebe'],
+            // 'nb_bebe'      => $personCounts['bebe'],
             'ages_enfants' => $agesEnfants,
         ]);
 
@@ -284,7 +324,10 @@ class Reservation extends Model
                 continue;
 
             $newParticipants[]         = $participant = new Voyageur([
+                'booking_id'            => $this->id,
+                'booking_type'          => get_class($this),
                 'adulte'                => (int)$isAdult,
+                'typePerson'            => $person,
                 'idx'                   => $idx,
                 'options'               => [],
                 'code_pays_nationalite' => 'ch',
@@ -380,12 +423,11 @@ class Reservation extends Model
         Voyageur::setDateDebutVoyage($this->date_depart);
 
         if ($chambre = $this->chambre) {
-            $chambrePersonCounts = $chambre->getPersonCounts($participants, $this->date_depart);
-            $tarifsChambre       = $chambre->getPrixNuit(
-                personCounts: $chambrePersonCounts,
-                agesEnfants: $this->ages_enfants,
-                datesStay: $this->datesHotelStay,
-                prixParNuit: false, // we want total
+            $tarifsChambre = $chambre->getPrixNuit(
+                travelers: $participants,
+                agesEnfants: $this->ages_enfants ?? [],
+                stayDates: $this->datesHotelStay,
+                getPerNight: false, // we want total
             );
         } else {
             $tarifsChambre = null;

@@ -1,11 +1,18 @@
 <?php
+declare(strict_types=1);
+
 namespace App\Models;
 
+
+use App\Contracts\PersonTypeManagerInterface;
+use App\Managers\HotelRoomOccupancyPersonTypeManager;
+use App\Managers\HotelRoomTarifPersonTypeManager;
 use App\Traits\HasPersonTypes;
 use Awobaz\Compoships\Database\Eloquent\Model;
+use Exception;
 use Illuminate\Contracts\Database\Eloquent\Builder;
+use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Collection;
-use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Facades\DB;
 
 class Chambre extends Model
@@ -29,10 +36,27 @@ class Chambre extends Model
         'disabled', // date DEFAULT NULL,
         'taux_change', // varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
         'taux_commission', // varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
+
+        // !NOTE! the following [simple|double|tripple|quatre|villa]_*_max legacy fields are currently
+        // only accessed for data input for compatibility with the legacy admin interface, and are deprecated
+        // for querying purposes. They are superseded by the following (currently virtual) fields:
+        // `_nb_min`, `_nb_max`, `_nb_max_adulte`, `_nb_max_enfant`, `_nb_max_bebe`.
         'simple_nb_max', // varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
         'simple_adulte_max', // varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
         'simple_enfant_max', // varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
         'simple_bebe_max', // varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
+        'double_nb_max', // varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
+        'double_adulte_max', // varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
+        'double_enfant_max', // varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
+        'double_bebe_max', // varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
+        'tripple_nb_max', // varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
+        'quatre_nb_max', // varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
+        'quatre_adulte_max', // varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
+        'villa_nb_max', // int(2) NOT NULL DEFAULT 0,
+        'tripple_adulte_max', // varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
+        'villa_adulte_max', // int(2) NOT NULL DEFAULT 0,
+
+        // !NOTE! The following discount fields will be refactored into a room_tarifs table
         'a', // varchar(10) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
         'b', // varchar(10) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
         'adulte_1_net', // varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
@@ -57,10 +81,6 @@ class Chambre extends Model
         'bebe_1_net', // varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
         'bebe_1_brut', // varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
         'bebe_1_total', // varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
-        'double_nb_max', // varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
-        'double_adulte_max', // varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
-        'double_enfant_max', // varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
-        'double_bebe_max', // varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
         'double_adulte_1_net', // varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
         'double_adulte_1_brut', // varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
         'double_adulte_1_total', // varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
@@ -86,8 +106,6 @@ class Chambre extends Model
         'double_bebe_1_net', // varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
         'double_bebe_1_brut', // varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
         'double_bebe_1_total', // varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
-        'tripple_nb_max', // varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
-        'tripple_adulte_max', // varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
         'tripple_adulte_1_net', // varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
         'tripple_adulte_1_brut', // varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
         'tripple_adulte_1_total', // varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
@@ -98,8 +116,6 @@ class Chambre extends Model
         'tripple_adulte_3_brut', // varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
         'tripple_adulte_3_total', // varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
         'tripple_enfant_max', // int(2) NOT NULL DEFAULT 0,
-        'quatre_nb_max', // varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
-        'quatre_adulte_max', // varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
         'quatre_adulte_1_net', // varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
         'quatre_adulte_1_brut', // varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
         'quatre_adulte_1_total', // varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
@@ -112,11 +128,11 @@ class Chambre extends Model
         'quatre_adulte_4_net', // varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
         'quatre_adulte_4_brut', // varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
         'quatre_adulte_4_total', // varchar(50) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
-        'villa_nb_max', // int(2) NOT NULL DEFAULT 0,
-        'villa_adulte_max', // int(2) NOT NULL DEFAULT 0,
         'villa_adulte_1_net', // varchar(10) COLLATE latin1_general_ci NOT NULL DEFAULT '0',
         'villa_adulte_1_brut', // varchar(10) COLLATE latin1_general_ci DEFAULT NULL,
         'villa_adulte_1_total', // varchar(10) COLLATE latin1_general_ci NOT NULL,
+
+        // !NOTE! The following discount fields will be refactored into a room_discount table
         'remise', // varchar(10) COLLATE latin1_general_ci DEFAULT NULL,
         'unite', // enum('pourcentage','chf') COLLATE latin1_general_ci DEFAULT NULL,
         'debut_remise', // varchar(50) COLLATE latin1_general_ci DEFAULT NULL,
@@ -134,8 +150,12 @@ class Chambre extends Model
         'code_promo2', // varchar(50) COLLATE latin1_general_ci DEFAULT NULL,
     ];
 
+    private const SECONDS_IN_A_DAY = 86400;
+
     protected $casts = [
-        // These are virtual fields, for now
+        // These _* are virtual fields, for now. After refactoring and replacing the legacy input UI,
+        // they will be converted into non-virtual fields and will lose their underscore prefix.
+
         // the fields below don't have an existing homonyme without the _ prefix
         '_villa'                => 'boolean', // tinyint(3) unsigned GENERATED ALWAYS AS (`villa_nb_max` > 0) VIRTUAL,
         '_nb_min'               => 'integer', // tinyint(3) unsigned GENERATED ALWAYS AS (ifnull(nullif(least(ifnull(nullif((`simple_nb_max` > 0) * `simple_adulte_max`,0) + 0,99),ifnull(nullif((`double_nb_max` > 0) * `double_adulte_max`,0) + 0,99),ifnull(nullif((`tripple_nb_max` > 0) * `tripple_adulte_max`,0) + 0,99),ifnull(nullif((`quatre_nb_max` > 0) * `quatre_adulte_max`,0) + 0,99)),99),1)) VIRTUAL,
@@ -159,44 +179,27 @@ class Chambre extends Model
         '_bebe_1_net'           => 'float', // decimal(6,2) GENERATED ALWAYS AS (if(`nb_max_bebe`,`bebe_1_net`,NULL)) VIRTUAL,
     ];
 
-    protected $pricingSlotsMode = false;
-
-    public function getPersonTypeMaxAges(): array
+    const TARIF_PERSONTYPE     = 'tarif';
+    const OCCUPANCY_PERSONTYPE = 'occupancy';
+    private $persontypeManagers = [];
+    public function getPersonCounts(string $type, $participants)
     {
-        return array_filter([
-            'bebe'         => $this->_age_max_bebe,
-            'petit_enfant' => $this->pricingSlotsMode ? $this->_age_max_petit_enfant : null,
-            'enfant'       => $this->_age_max_enfant,
-        ]);
+        /** @var PersonTypeManagerInterface $manager */
+        $manager = $this->persontypeManagers[$type] ??= match ($type) {
+            self::TARIF_PERSONTYPE     => new HotelRoomTarifPersonTypeManager($this),
+            self::OCCUPANCY_PERSONTYPE => new HotelRoomOccupancyPersonTypeManager($this),
+        };
+        return $manager->getPersonCounts($participants);
     }
 
-    public function getPersonSlots()
-    {
-        if ($this->pricingSlotsMode) {
-            $ampe                = $this->_age_max_petit_enfant;
-            $nb_max_petit_enfant = $this->_age_max_bebe < $ampe && $ampe < $this->age_max_enfant ? 1 : 0;
-        }
-
-        $slots = [
-            'adulte'       => $this->_nb_max_adulte,
-            'enfant'       => $this->_nb_max_enfant,
-            'petit_enfant' => $nb_max_petit_enfant ?? 0,
-            'bebe'         => $this->_nb_max_bebe,
-        ];
-    }
-
-    public function getPersonCountsForPricing(Collection $voyageurs): Collection
-    {
-        $this->pricingSlotsMode = true;
-
-        $counts = $this->getVoyageursByPersonTypes($voyageurs)
-            ->map(fn($voyageurs) => count($voyageurs));
-
-        $this->pricingSlotsMode = false;
-
-        return $counts;
-    }
-
+    // public function getTarifPersonCounts(Collection $travelers): Collection
+    // {
+    //     return $this->getTarifPersonTypeManager()->getPersonCounts($travelers);
+    // }
+    // public function getOccupationPersonCounts(Collection $travelers): Collection
+    // {
+    //     return $this->getOccupationPersonTypeManager()->getPersonCounts($travelers);
+    // }
 
     protected $with = ['monnaieObj'];
     public function monnaieObj()
@@ -204,26 +207,21 @@ class Chambre extends Model
         return $this->belongsTo(Monnaie::class, 'monnaie', 'code');
     }
 
-    public function lieu()
-    {
-        return $this->belongsTo(Lieu::class, 'id_lieu', 'id_lieu');
-    }
-
     public function hotel()
     {
         return $this->belongsTo(Hotel::class, 'id_hotel', 'id');
     }
 
-
-
     // TODO: This class extends Awobaz\Compoships\Database\Eloquent\Model for one reason:
     // To be able to use more than one key in this 'memeChambre' relationship.
-    // To avoid this problem, redesign the room structure in database, in order to have
-    // The table `chambre` must be divided into
-    // `chambre` (morphTo Hotel, Circuit, Croisiere), defines name, min/max occupant numbers, descriptions
-    // `chambre_period_tarifs` defines tarifs and validity dates
-    // `chambre_remises` defines sale-period, occupation period and %remise
+    // This is due to bad DB structure design that merged three three concerns into a single table.
+    // We need to clean this up by refactoring hotel/room structure:
+    // - Age limit fields (_age_max_*) will move to Hotel table
+    // - `room` table (morphTo Hotel, Circuit, Croisiere) will only contain name, descriptions, occupant capacity fields (nb_min/max) and room validity dates.
+    // - `room_tarifs` (belongsTo room) will define tarifs (*_net fields) and tarif validity dates.
+    // - Remise fields will move to new table `room_discount` (sale_start/end dates, trip_start/end  dates, amount_pct, status, promo_code)
     // When this is done, Awobaz can be removed from the project.
+    // Note: this refactor will have many impact, including on scopeValid() and other queries.
     public function memeChambre()
     {
         return $this->hasOne(
@@ -239,10 +237,8 @@ class Chambre extends Model
 
     public function overlaps($bounds1, $bounds2)
     {
-        if (!is_array($bounds1))
-            $bounds1 = [$bounds1, $bounds1];
-        if (!is_array($bounds2))
-            $bounds2 = [$bounds2, $bounds2];
+        if (!is_array($bounds1)) $bounds1 = [$bounds1, $bounds1];
+        if (!is_array($bounds2)) $bounds2 = [$bounds2, $bounds2];
         return $bounds1[0] && $bounds1[1] && $bounds2[0] && $bounds2[1] &&
             $bounds1[0] <= $bounds2[1] && $bounds2[0] <= $bounds1[1];
     }
@@ -276,27 +272,24 @@ class Chambre extends Model
         return 0;
     }
 
-    public function calcBrut($montant, $pctRemise = 0)
+    public function calcBrut($montant, $pctRemise = 0, $taux = null)
     {
+        $taux ??= $this->monnaieObj->taux;
         return $montant *
             (1 - $pctRemise) *
-            $this->monnaieObj->taux *
+            $taux *
             (1 + $this->taux_commission / 100);
     }
 
-    public $prixNuit = null;
-    public function getPrixNuit(
-        Collection $personCounts,
-        array $datesStay,
-        $agesEnfants = [],
-        $datesVente = null,
-        $prixParNuit = false,
-    ) {
+    public function getNetPrices(Collection $tarifPersonCounts): array
+    {
+        $netPrices = array_fill_keys($tarifPersonCounts->keys()->all(), []);
+
         if ($this->_villa) {
-            $prixNet = ['adulte' => [$this->_adulte_1_net]];
+            $netPrices['adulte'][] = $this->_adulte_1_net;
         } else {
-            // adulte prices
-            $prixNet['adulte'] = match ($personCounts['adulte']) {
+            // set adulte tarifs
+            $netPrices['adulte'] = match ($tarifPersonCounts['adulte']) {
                 1 => [$this->_adulte_1_net],
                 2 => [$this->_adulte_2_net, $this->_adulte_2_net],
                 3 => [$this->_adulte_2_net, $this->_adulte_2_net, $this->_adulte_3_net],
@@ -308,146 +301,277 @@ class Chambre extends Model
                 ],
             };
 
-            foreach ($agesEnfants as $i => $age) {
-                // the first (youngest) child gets a special tarif IF they're young enough
-                if (!($prixNet['enfant'] ?? []) && $age <= $this->_age_max_petit_enfant) {
-                    $prixNet['enfant'][$i] = $this->_enfant_1_net ?? $this->_enfant_2_net;
-                } else {
-                    // all other kids get normal tarif
-                    $prixNet['enfant'][$i] = $this->_enfant_2_net;
-                }
-            }
+            // // define child tarifs
+            // $childTarifs = [
+            //     'bebe'         => ['bebe', $this->_bebe_1_net],
+            //     'petit_enfant' => ['enfant', $this->_enfant_1_net ?? $this->_enfant_2_net],
+            //     'enfant'       => ['enfant', $this->_enfant_2_net],
+            // ];
+            // // set child tarifs: [personType => [price_child_1, price_child_2, ...]]
+            // $tarifPersonCounts->each(function ($count, $person) use ($childTarifs, &$netPrices) {
+            //     if (empty($childTarifs[$person])) return;
+            //     [$outputType, $netPrice] = $childTarifs[$person];
+            //     array_push($netPrices[$outputType], ...array_fill(0, $count, $netPrice));
+            // });
 
-            if ($personCounts['bebe'] ?? null) {
-                $prixNet['bebe'] = [$this->_bebe_1_net];
+
+            // baby gets baby tarif
+            if (!empty($tarifPersonCounts['bebe'])) {
+                $netPrices['bebe'][] = $this->_bebe_1_net;
+            }
+            // small child gets small child tarif if any, fallback to child tarif
+            if (!empty($tarifPersonCounts['petit_enfant'])) {
+                $netPrices['enfant'][] = $this->_enfant_1_net ?? $this->_enfant_2_net;
+            }
+            // other children get normal child tarif
+            for ($i = 0; $i < ($tarifPersonCounts['enfant'] ?? 0); $i++) {
+                $netPrices['enfant'][] = empty($netPrices['enfant'])
+                    // first child tarif falls back to 2nd child tarif
+                    // TODO: check with Sales agent if that's a plausible situation (only found 1 instance in DB)
+                    ? $this->_enfant_1_net ?? $this->_enfant_2_net
+                    // 2nd child and further get 2nd child tarif
+                    : $this->_enfant_2_net;
             }
         }
+        return $netPrices;
+    }
 
-        // by default, number of nights is calculated from trip start/end dates
-        $nbNuitsTotal = $nbNuits = round((strtotime($datesStay[1]) - strtotime($datesStay[0])) / (24 * 60 * 60));
+    public $prixNuit = null;
 
-        $nextPrixNuit = $this->getNextPrixNuit($personCounts, $datesStay, $agesEnfants, $datesVente, $prixParNuit);
-        // if there's a second period, adjust number of nights for the first period
-        $nbNuits -= $nextPrixNuit?->nbNuits ?? 0;
+    /**
+     * @param array $stayDates
+     * @param Collection|null $tarifPersonCounts
+     * @param Collection|null $travelers
+     * @param array $agesEnfants
+     * @param array|null $saleDates
+     * @param bool $getPerNight
+     * @return object
+     * @throws Exception
+     */
+    public function getPrixNuit(
+        array $stayDates,
+        Collection $tarifPersonCounts = null,
+        Collection $travelers = null,
+        $agesEnfants = [],
+        array|null $saleDates = null,
+        bool $getPerNight = false,
+    ) {
+        $tarifPersonCounts ??= $this->getPersonCounts(self::TARIF_PERSONTYPE, $travelers);
 
-        // by default, sale date is today
-        $datesVente ??= date('Y-m-d');
-        $remisePct  = $this->calcRemise($datesVente, $datesStay);
+        // get prices for this period
+        $netPricesThisPeriod = $this->getNetPrices($tarifPersonCounts);
+        // Check for the next period (if it exists)
+        $netPricesNextPeriod = $this->getNextNightPrice($tarifPersonCounts, $stayDates, $agesEnfants, $saleDates, $getPerNight);
 
-        $prixNuit = (object)[
+        $nextPeriodNightsCount = (int)$netPricesNextPeriod?->nbNuits ?? 0;
+        // Adjust the number of nights for the first period
+        $nightsCount = $this->calculateNumberOfNights($stayDates) - $nextPeriodNightsCount;
+
+        // Default sale date is today
+        $saleDates ??= date('Y-m-d');
+        // Calculate remise percentage
+        $discountPct = $this->calcRemise($saleDates, $stayDates);
+
+        $agesEnfants ??= $travelers->map(fn($t) => $t->getAgeAtDate($stayDates[0], null))
+            ->filter()->sort()->all();
+
+        // Calculate prices
+        $periodTarif = $this->buildTarifOutput(
+            $netPricesThisPeriod,
+            $tarifPersonCounts,
+            $agesEnfants,
+            $stayDates,
+            $discountPct,
+            $nightsCount,
+            $getPerNight,
+        );
+
+        if ($netPricesNextPeriod) {
+            $periodTarif = $this->mergeTwoPeriods(
+                $periodTarif,
+                $netPricesNextPeriod,
+                $tarifPersonCounts,
+                $agesEnfants,
+                $stayDates,
+                $getPerNight,
+                $nightsCount + $nextPeriodNightsCount,
+            );
+        }
+
+        $this->addTotalsToTarif($periodTarif);
+        $periodTarif->chambre = $this;
+
+        return $periodTarif;
+    }
+
+    private function calculateNumberOfNights(array $datesStay): int
+    {
+        return (int)round((strtotime($datesStay[1]) - strtotime($datesStay[0])) / self::SECONDS_IN_A_DAY);
+    }
+
+    private function buildPriceDetail(array $netPrices, float $discountPct, int $nbNights, bool $pricePerNight): object
+    {
+        return (object)array_map(
+            fn($prix) => array_map(
+                fn($net) => ceil($this->calcBrut($net, $discountPct)) * ($pricePerNight ? 1 : $nbNights),
+                $prix,
+            ),
+            $netPrices,
+        );
+    }
+
+    private function buildTarifOutput(
+        array $netPrices,
+        Collection $tarifPersonCounts,
+        array $childAges,
+        array $datesStay,
+        float $pctDiscount,
+        int $nbNights,
+        bool $prixParNuit,
+    ) {
+        return (object)[
             'id'          => $this->id_chambre,
-            'counts'      => $personCounts,
-            'agesEnfants' => $agesEnfants,
+            'counts'      => $tarifPersonCounts,
+            'agesEnfants' => $childAges,
             'dates'       => [$datesStay[0], min($this->fin_validite, $datesStay[1])],
-            'nbNuits'     => $nbNuits,
-            'remisePct'   => $remisePct,
+            'nbNuits'     => $nbNights,
+            'remisePct'   => $pctDiscount,
             'prixParNuit' => $prixParNuit,
-            'net'         => (object)['detail' => (object)$prixNet],
+            'net'         => (object)['detail' => (object)$netPrices],
             'brut'        => (object)[
-                'detail' => (object)array_map(
-                    callback: fn($prix) => array_map(
-                        callback: fn($net) => ceil($this->calcBrut($net, $remisePct)) * ($prixParNuit ? 1 : $nbNuits),
-                    array: $prix,
-                    ),
-                array: $prixNet,
-                )
+                'detail' => $this->buildPriceDetail($netPrices, $pctDiscount, $nbNights, $prixParNuit),
             ],
             'sansRemise'  => (object)[
-                'detail' => (object)array_map(
-                    callback: fn($prix) => array_map(
-                        callback: fn($net) => ceil($this->calcBrut($net, 0)) * ($prixParNuit ? 1 : $nbNuits),
-                    array: $prix,
-                    ),
-                array: $prixNet,
-                )
+                'detail' => $this->buildPriceDetail($netPrices, 0, $nbNights, $prixParNuit),
             ],
         ];
+    }
 
-        if ($nextPrixNuit) {
-            $mergeTwoPeriods = fn($typePrix) => (object)[
-                'detail' => (object)array_map(
-                    callback: function ($typePersonne) use ($prixNuit, $typePrix, $prixParNuit, $nextPrixNuit, $nbNuitsTotal) {
-                        return array_map(
-                            callback: function ($num) use ($prixNuit, $typePrix, $typePersonne, $prixParNuit, $nextPrixNuit, $nbNuitsTotal) {
-                                $val =
-                                    $prixNuit->$typePrix->detail->$typePersonne[$num] * ($prixParNuit ? $prixNuit->nbNuits : 1) +
-                                    $nextPrixNuit->$typePrix->detail->$typePersonne[$num] * ($prixParNuit ? $nextPrixNuit->nbNuits : 1);
-                                return $prixParNuit ? $val / $nbNuitsTotal : ceil($val);
-                            },
-                        array: array_combine($keys = array_keys((array)$prixNuit->$typePrix->detail->$typePersonne), $keys),
-                        );
-                    },
-                array: array_combine($keys = array_keys((array)$prixNuit->$typePrix->detail), $keys),
-                )
-            ];
+    private function weightedAvg(Collection|Arrayable|array $qttyWeightPairs): null|float
+    {
+        if (empty($qttyWeightPairs)) return null;
+        if (!($qttyWeightPairs instanceof Collection)) $qttyWeightPairs = collect($qttyWeightPairs);
+        $totalWeight = $qttyWeightPairs->sum(fn($pair) => $pair[1]);
+        if (!$totalWeight) return null;
+        return $qttyWeightPairs->sum(fn($pair) => $pair[0] * $pair[1]) / $totalWeight;
+    }
 
-            // fusion of 1st and 2nd period
-            $prix            = (object)[
-                'id'          => $this->id_chambre,
-                'counts'      => $personCounts,
-                'agesEnfants' => $agesEnfants,
-                'dates'       => $datesStay,
-                'nbNuits'     => $nbNuitsTotal,
-                'remisePct'   => null,
-                'net'         => $mergeTwoPeriods('net'),
-                'brut'        => $mergeTwoPeriods('brut'),
-                'sansRemise'  => $mergeTwoPeriods('sansRemise'),
-                'details'     => [$prixNuit, $nextPrixNuit],
-            ];
-            $prix->remisePct = round(1 - array_sum($prix->brut->detail->adulte) / array_sum($prix->sansRemise->detail->adulte), 3);
-        } else {
-            $prix = $prixNuit;
-        }
+    private function mergeTwoPeriods(
+        object $periodNightPrice,
+        object $nextNightPrice,
+        Collection $personCounts,
+        array $childAges,
+        array $stayDates,
+        bool $priceIsPerNight,
+        int $nbNuitsTotal,
+    ): object {
 
-        // add totals
-        foreach ([$prix, ...($prix->details ?? [])] as $p) {
-            foreach (['net', 'brut', 'sansRemise'] as $typePrix) {
-                $p->$typePrix->totals = (object)($tots = array_map(fn($arr) => array_sum($arr), (array)$p->$typePrix->detail));
-                $p->$typePrix->total  = array_sum($tots); //, 3);
-            }
-            $p->remisePct = round(1 - $p->brut->total / $p->sansRemise->total, 3);
-        }
+        $mergeTwoPeriods = fn($typePrix) => (object)[
+            'detail' => (object)array_map(
+                fn($typePersonne) => array_map(
+                    fn($num) => $this->mergePeriodPrices(
+                        $periodNightPrice->$typePrix->detail->$typePersonne[$num],
+                        $periodNightPrice->nbNuits,
+                        $nextNightPrice->$typePrix->detail->$typePersonne[$num],
+                        $nextNightPrice->nbNuits,
+                        $priceIsPerNight,
+                    ),
 
-        $prix->chambre = $this;
+                    array_combine($keys = array_keys((array)$periodNightPrice->$typePrix->detail->$typePersonne), $keys),
+                ),
+                array_combine($keys = array_keys((array)$periodNightPrice->$typePrix->detail), $keys),
+            )
+        ];
+
+        $prix = (object)[
+            'id'          => $this->id_chambre,
+            'counts'      => $personCounts,
+            'agesEnfants' => $childAges,
+            'dates'       => $stayDates,
+            'nbNuits'     => $nbNuitsTotal,
+            'remisePct'   => null,
+            'net'         => $mergeTwoPeriods('net'),
+            'brut'        => $mergeTwoPeriods('brut'),
+            'sansRemise'  => $mergeTwoPeriods('sansRemise'),
+            'details'     => [$periodNightPrice, $nextNightPrice],
+        ];
+
+        $prix->remisePct = round(
+            1 - array_sum($prix->brut->detail->adulte) / array_sum($prix->sansRemise->detail->adulte),
+            3,
+        );
 
         return $prix;
     }
 
-    private function getNextPrixNuit(
+    private function mergePeriodPrices(
+        float $currentPrice,
+        int $currentNbNights,
+        float $nextPrice,
+        int $nextNbNights,
+        bool $priceByNight,
+    ): float {
+        return ceil(
+            $priceByNight
+            ? collect([[$currentPrice, $currentNbNights], [$nextPrice, $nextNbNights]])->weightedAvg()
+            : $currentPrice + $nextPrice
+        );
+    }
+
+    private function addTotalsToTarif(object $prix)
+    {
+        foreach ([$prix, ...($prix->details ?? [])] as $p) {
+            foreach (['net', 'brut', 'sansRemise'] as $typePrix) {
+                $p->$typePrix->totals = (object)($tots = array_map(fn($arr) => array_sum($arr), (array)$p->$typePrix->detail));
+                $p->$typePrix->total  = array_sum($tots);
+            }
+            $p->remisePct = round(1 - $p->brut->total / $p->sansRemise->total, 3);
+        }
+    }
+
+    private function getNextNightPrice(
+        //$travelers,
         Collection $personCounts,
         array $datesVoyage,
         $agesEnfants,
         $datesVente,
         $prixParNuit,
     ) {
-        // Handle partial validty: stay periods partially overlaps the validiy of the room
-        if ($this->fin_validite < $datesVoyage[1]) {
+        if (!$this->isPeriodOverlapping($datesVoyage)) return null;
 
-            // find the next stay period for the same room
-            $nextDay    = date('Y-m-d', strtotime('+1 day', strtotime($this->fin_validite)));
-            $nextPeriod = Chambre::where([
-                'id_hotel'       => $this->id_hotel,
-                'nom_chambre'    => $this->nom_chambre,
-                'debut_validite' => $nextDay,
-            ])->first();
+        $nextPeriod = $this->findNextRoomPeriod($this->fin_validite, $this->id_hotel, $this->nom_chambre);
 
-            // if there's a period defined for the second part of the trip
-            if (!$nextPeriod) {
-                throw new \Exception("La date de fin du voyage ($datesVoyage[1]) est postérieure à " .
-                    "la fin de la validité de la chambre ($this->fin_validite)");
-            }
+        if (!$nextPeriod) return $this->handleNextPeriodNotFound($datesVoyage);
 
-            // get the prices for those nights
-            return $nextPeriod->getPrixNuit(
-                personCounts: $personCounts,
-                agesEnfants: $agesEnfants,
-                datesVente: $datesVente,
-                datesStay: [$nextDay, $datesVoyage[1]],
-                prixParNuit: $prixParNuit,
-            );
-        } else {
-            return null;
-        }
+        return $nextPeriod->getPrixNuit(
+            // travelers: $travelers,
+            tarifPersonCounts: $personCounts,
+            agesEnfants: $agesEnfants,
+            saleDates: $datesVente,
+            stayDates: [$nextPeriod->debut_validite, $datesVoyage[1]],
+            getPerNight: $prixParNuit,
+        );
+    }
+
+    private function isPeriodOverlapping(array $datesVoyage): bool
+    {
+        return $this->fin_validite < $datesVoyage[1];
+    }
+
+    private function findNextRoomPeriod(string $finValidite, int $hotelId, string $roomName): ?Chambre
+    {
+        $nextDay = date('Y-m-d', strtotime('+1 day', strtotime($finValidite)));
+        return Chambre::where([
+            'id_hotel'       => $hotelId,
+            'nom_chambre'    => $roomName,
+            'debut_validite' => $nextDay,
+        ])->first();
+    }
+
+    private function handleNextPeriodNotFound(array $datesVoyage)
+    {
+        throw new \Exception("La date de fin du voyage ($datesVoyage[1]) est postérieure à " .
+            "la fin de la validité de la chambre ($this->fin_validite)");
     }
 
     /****************** SCOPES *********************/

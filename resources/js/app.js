@@ -1,13 +1,16 @@
 import { createApp, h } from 'vue';
 import { createPinia } from 'pinia';
+import { createORM } from 'pinia-orm'
 import { createInertiaApp } from '@inertiajs/vue3';
 import { ZiggyVue } from 'ziggy-js';
-import AdminLayout from '@/Layouts/AdminLayout.vue'
-import BookingLayout from '@/Layouts/BookingLayout.vue'
+import AdminLayout from 'Layouts/AdminLayout.vue'
+import BookingLayout from 'Layouts/BookingLayout.vue'
 import VueDatePicker from '@vuepic/vue-datepicker';
-
 import '@vuepic/vue-datepicker/dist/main.css';
 import '../css/app.css';
+
+import PrimeVue from 'primevue/config';
+import Aura from '@primevue/themes/aura';
 
 createInertiaApp({
   resolve: name => {
@@ -26,18 +29,26 @@ createInertiaApp({
     return page
   },
   setup({ el, App, props, plugin }) {
-    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-
     const app = createApp({
       render: () => h(App, props),
       setup() {
-        // provide('csrfToken', csrfToken);
       }
     })
       .use(plugin)
       .use(ZiggyVue)
-      .use(createPinia())
-
+      .use(createPinia().use(createORM()))
+      .use(PrimeVue, {
+        theme: {
+          preset: Aura,
+          options: {
+            darkModeSelector: '.dark-mode',
+            // cssLayer: {
+            //     name: 'primevue',
+            //     // order: 'tailwind-base, primevue, tailwind-utilities'
+            // }
+          }
+        }
+      })
     app.component('VueDatePicker', VueDatePicker);
 
     app.mount(el);

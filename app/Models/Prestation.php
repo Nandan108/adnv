@@ -1,7 +1,7 @@
 <?php
 namespace App\Models;
 
-use App\Casts\EmptyStringToNull;
+use App\Casts\NullFloat;
 use App\Traits\HasPersonTypes;
 use DateTimeInterface;
 use Illuminate\Contracts\Database\Eloquent\Builder;
@@ -36,9 +36,9 @@ class Prestation extends Model
 
     protected $casts = [
         'taux_commission' => 'int',
-        'adulte_net'      => EmptyStringToNull::class,
-        'enfant_net'      => EmptyStringToNull::class,
-        'bebe_net'        => EmptyStringToNull::class,
+        'adulte_net'      => NullFloat::class,
+        'enfant_net'      => NullFloat::class,
+        'bebe_net'        => NullFloat::class,
         'obligatoire'     => 'boolean',
         'debut_validite'  => 'datetime:Y-m-d',
         'fin_validite'    => 'datetime:Y-m-d',
@@ -58,11 +58,11 @@ class Prestation extends Model
 
     public function scopeIsNotRepas(Builder $query)
     {
-        $query->whereHas('type', fn($q) => $q->where('is_meal', '=', 0));
+        $query->whereHas($this->type(), fn($q) => $q->where('is_meal', '=', 0));
     }
     public function scopeIsRepas(Builder $query)
     {
-        $query->whereHas('type', fn($q) => $q->where('is_meal', '>', 0));
+        $query->whereHas($this->type(), fn($q) => $q->where('is_meal', '>', 0));
     }
 
     public function monnaie()

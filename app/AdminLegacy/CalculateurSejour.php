@@ -5,7 +5,7 @@ use Exception;
 use PDOException;
 
 /**
- * @deprecated use Reservation::getNewInstance()->getTotals()
+ * @deprecated use Reservation::getNewInstance(...)->getTotals()
  */
 class CalculateurSejour {
     private $vol_prix = [];

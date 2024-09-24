@@ -19,11 +19,11 @@ trait HasPersonTypes
 {
     /**
      * This function defines airline industry standard ages limits for babies and children.
-     * That is, once a baby is 2 years of age, they're no longer considered a baby
-     * passenger. Similarely, a child is considered an adulte starting at their 12th birthday.
+     * That is, once a baby is 2 years of age, they're no longer considered a baby passenger.
+     * Similarely, a child is considered an adulte starting at their 12th birthday.
      * This function should be overriden by any class that needs different age limits.
      */
-    public function getPersonTypeMaxAges()
+    public function getPersonTypeMaxAges(): array|null
     {
         return [
             'bebe'   => 1,
@@ -44,14 +44,16 @@ trait HasPersonTypes
         return null;
     }
 
-    /*
-     *
-     * @param string|null $date_naissance Traveler birthdate
-     * @param string $debut_voyage Trip start date
-     * @
-     * @return string person type (adulte, enfant or bebe)
-     */
-
+     /**
+      * Check whether bumping is allowed.
+      * Classes using HasPersonType should override this method.
+      * @param mixed $fromType
+      * @param mixed $toType
+      * @return boolean
+      */
+     public function allowBumping($fromType, $toType) {
+        return true;
+     }
 
     /**
      * Returns the person type (adulte, enfant or bebe) according to birthdate,
@@ -67,27 +69,37 @@ trait HasPersonTypes
      */
     public function getPersonType(int|null $age, &$slots = null, $ageLimits = null): string
     {
-        //if (is_null($age)) return 'adulte';
+        // if $age is NULL, consider it an adult but continue with the logic,
+        // as there could still be a slot overflow.
+        $age ??= 99;
+
         // Situation where a baby is bumped to a child slot:
-        // For a reservation for 1 baby and 1 child (2yo), once birthdates are entered, the
-        // hotel might have an age limit such that a 2yo is a baby, so we have 2*baby, 0*child.
-        // However, the room may only accept 1 baby, 1 child and 2 adults. So the 2yo should
+        // A 2yo has a 'child' base type (Airline point of view), but is often considered a baby by hotels.
+        // For a reservation for 1 baby and 1 2yo child, such a hotel would see 2 babies and 0 children.
+        // However, the room may only accept maximum 1 baby, 1 child and 2 adults. So the 2yo should
         // get bumped to take the child slot. However, does the hotel accept a baby in a child slot?
-        // Situation where a child is bumped to teen or adult ?
-        // That might be if we have more children that available child slots.
+        // Also, can a child be bumped to teen or adult ? That could happen if we have more children than
+        // available child slots. This needs clarifying the policy with hotel manager.
 
         $ageLimits ??= $this->getPersonTypeMaxAges();
+        $bumpedFrom = false;
 
         foreach ($ageLimits as $type => $maxAge) {
-            if (($age ?? 99) <= $maxAge && ($slots === null || $slots[$type]--)) {
-                return $type;
+            if ($bumpedFrom && !$this->allowBumping($bumpedFrom, $type)) {
+                throw new \Exception("Cannot bump from $bumpedFrom to $type due to policy restrictions!");
+            }
+
+            if ($age <= $maxAge) {
+                if ($slots === null || $slots[$type]--) {
+                    return $type;
+                }
+                $bumpedFrom = $type;
             }
         }
 
         if ($slots && ($slots['adulte'] ?? 0) === -1) {
-            throw new \Exception("Passenger overflow!");
+            throw new \Exception("Person-type slot overflow!");
         }
-        ;
 
         return 'adulte';
     }

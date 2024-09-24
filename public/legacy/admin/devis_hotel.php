@@ -10,7 +10,7 @@ if (isset($_SESSION['account_login'])) {
     $stmt7->execute();
     $account7 = $stmt7->fetch(PDO::FETCH_OBJ);
 
-    $nom = $account7->nom;
+    $nom    = $account7->nom;
     $prenom = $account7->prenom;
 
     include 'header.php';
@@ -26,7 +26,7 @@ if (isset($_SESSION['account_login'])) {
     }
 
     $id_reservation_info = '';
-    $stmt = $conn->prepare('SELECT * FROM reservation_info WHERE id_reservation_info !=:id_reservation_info AND devis =:devis ORDER BY id_reservation_info DESC');
+    $stmt                = $conn->prepare('SELECT * FROM reservation_info WHERE id_reservation_info !=:id_reservation_info AND devis =:devis ORDER BY id_reservation_info DESC');
     $stmt->bindValue('id_reservation_info', $id_reservation_info);
     $stmt->bindValue('devis', '1');
     $stmt->execute();
@@ -141,14 +141,14 @@ if (isset($_SESSION['account_login'])) {
                                 while ($account = $stmt->fetch(PDO::FETCH_OBJ)) {
 
                                     $id_reservation_valeur = $account->id_reservation_valeur;
-                                    $nom = $account->nom;
-                                    $prenom = $account->prenom;
-                                    $email1 = $account->email;
-                                    $rue = $account->rue;
-                                    $npa = $account->npa;
-                                    $lieu = $account->lieu;
-                                    $pays = $account->pays;
-                                    $tel = $account->tel;
+                                    $nom                   = $account->nom;
+                                    $prenom                = $account->prenom;
+                                    $email1                = $account->email;
+                                    $rue                   = $account->rue;
+                                    $npa                   = $account->npa;
+                                    $lieu                  = $account->lieu;
+                                    $pays                  = $account->pays;
+                                    $tel                   = $account->tel;
 
 
 
@@ -160,23 +160,23 @@ if (isset($_SESSION['account_login'])) {
                                     // get URL
                                     $url = $resVal->url;
                                     // get chambre/hotel
-                                    $id_hotel = $resVal->id_hotel;
-                                    $id_chambre = $resVal->id_total_chambre;
+                                    $id_hotel      = $resVal->id_hotel;
+                                    $id_chambre    = $resVal->id_total_chambre;
                                     $total_chambre = $resVal->total_chambre;
                                     // get transfert
-                                    $id_transfert = $resVal->id_total_transfert;
+                                    $id_transfert    = $resVal->id_total_transfert;
                                     $transfert_total = $resVal->transfert_total;
                                     $transfert_tarif = $resVal->transfert_tarif;
-                                    $transfert_type = $resVal->transfert_type;
+                                    $transfert_type  = $resVal->transfert_type;
                                     // get repas
-                                    $id_repas = $resVal->id_total_repas;
+                                    $id_repas    = $resVal->id_total_repas;
                                     $total_repas = $resVal->total_repas;
                                     // get prestation
-                                    $id_prestation = $resVal->id_total_autre;
+                                    $id_prestation    = $resVal->id_total_autre;
                                     $total_prestation = $resVal->total_autre;
                                     // get tours
                                     $id_excursion = $resVal->id_excursion;
-                                    $total_tour = $resVal->total_tour;
+                                    $total_tour   = $resVal->total_tour;
 
                                     // get global total
                                     $total_grobal = $resVal->total_grobal;
@@ -191,13 +191,13 @@ if (isset($_SESSION['account_login'])) {
                                     //$destination=utf8_decode($destination3);
                                     $destination = $destination3;
 
-                                    $dd = str_replace('du=', '', $tab[1]);
-                                    $dai = str_replace('au=', '', $tab[2]);
-                                    $adulte = str_replace('adulte=', '', $tab[3]);
-                                    $enfant = str_replace('enfant=', '', $tab[4]);
-                                    $enfant_age = str_replace('enfant1=', '', $tab[5]);
+                                    $dd           = str_replace('du=', '', $tab[1]);
+                                    $dai          = str_replace('au=', '', $tab[2]);
+                                    $adulte       = str_replace('adulte=', '', $tab[3]);
+                                    $enfant       = str_replace('enfant=', '', $tab[4]);
+                                    $enfant_age   = str_replace('enfant1=', '', $tab[5]);
                                     $enfant_age_1 = str_replace('enfant=', '', $tab[6]);
-                                    $nb_bebe = str_replace('bebe=', '', $tab[7]);
+                                    $nb_bebe      = str_replace('bebe=', '', $tab[7]);
 
                                     // CALCUL NOMBRE ENFANT ET BEBE
 
@@ -221,7 +221,7 @@ if (isset($_SESSION['account_login'])) {
                                     $nbJours = round($nbJoursTimestamp / 86400);
 
 
-                                    $da = new DateTime($dai);
+                                    $da  = new DateTime($dai);
                                     $daa = new DateTime($dai);
 
                                     $daa = $daa->format('Y-m-d');
@@ -233,11 +233,11 @@ if (isset($_SESSION['account_login'])) {
                                     $stmt8 = $conn->prepare('SELECT * FROM hotels_new WHERE id =:id_hotel');
                                     $stmt8->bindValue('id_hotel', $id_hotel);
                                     $stmt8->execute();
-                                    $account8 = $stmt8->fetch(PDO::FETCH_OBJ);
-                                    $hotel = $account8->hotel;
-                                    $hotel_mail = $account8->mail;
+                                    $account8    = $stmt8->fetch(PDO::FETCH_OBJ);
+                                    $hotel       = $account8->hotel;
+                                    $hotel_mail  = $account8->mail;
                                     $hotel_ville = $account8->ville;
-                                    $hotel_pays = $account8->pays;
+                                    $hotel_pays  = $account8->pays;
                                     $hotel_repas = $account8->repas;
 
 
@@ -285,60 +285,18 @@ if (isset($_SESSION['account_login'])) {
 
                                         <td style="vertical-align: middle;">
                                             <?php
+                                            [$statusTxt, $statusColor] = match ($account->status) {
+                                                1 => ['Nouveau', "#f9b3b3"],
+                                                2 => ['En cours', "#e1cd62"],
+                                                3 => ['Valider', "#7eca49"],
+                                                4 => ['Attente paiement', "#ffda6c"],
+                                                5 => ['Paiement effectué', "#00dff7"],
+                                                6 => ['Annuler', "#f00"],
+                                            };
 
-                                            if ($account->status == 1) {
-                                                ?>
-                                                <p
-                                                    style="background: #f9b3b3;text-align: center;color: #FFF;width: 80%;padding: 5px;">
-                                                    Nouveau</p>
-
-                                                <?php
-                                            }
-
-                                            if ($account->status == 2) {
-                                                ?>
-                                                <p
-                                                    style="background: #e1cd62;text-align: center;color: #FFF;width: 80%;padding: 5px;">
-                                                    En cours</p>
-
-                                                <?php
-                                            }
-                                            if ($account->status == 3) {
-                                                ?>
-                                                <p
-                                                    style="background: #7eca49;text-align: center;color: #FFF;width: 80%;padding: 5px;">
-                                                    Valider</p>
-
-                                                <?php
-                                            }
-
-                                            if ($account->status == 4) {
-                                                ?>
-                                                <p
-                                                    style="background: #ffda6c;text-align: center;color: #FFF;width: 80%;padding: 5px;">
-                                                    Attente paiement</p>
-
-                                                <?php
-                                            }
-                                            if ($account->status == 5) {
-                                                ?>
-                                                <p
-                                                    style="background: #00dff7;text-align: center;color: #FFF;width: 80%;padding: 5px;">
-                                                    Paiement effectué</p>
-
-                                                <?php
-                                            }
-
-                                            if ($account->status == 6) {
-                                                ?>
-                                                <p style="background: #f00;text-align: center;color: #FFF;width: 80%;padding: 5px;">
-                                                    Annuler</p>
-
-                                                <?php
-                                            }
-
+                                            $style = 'background-color: $bgColor;text-align: center;color: #FFF;width: 80%;padding: 5px;';
                                             ?>
-
+                                            <p style="<?= $style ?>"><?= $statusTxt ?></p>
                                         </td>
 
 
@@ -348,49 +306,26 @@ if (isset($_SESSION['account_login'])) {
                                             $racine = "https://adnvoyage.com/reservation/";
                                             //$racine="http://localhost/reservation/";
 
-                                            if ($account->status == 1) {
-                                                ?>
-
-
+                                            if ($account->status == 1) { ?>
                                                 <a href="<?php echo $racine; ?>reservation-devis.php?xx=<?php echo MD5($account->id_reservation_valeur); ?>&xv=<?php echo md5($account->id_reservation_info); ?>"
                                                     class="btn" style="font-size: 10px;padding: 0 14px;margin-bottom: 5px;"><i
                                                         class="icon-edit"></i> Modifier</a>
                                                 <br>
-
-
-                                                <?php
-
-                                            }
+                                            <?php }
 
                                             $stmt80 = $conn->prepare('SELECT * FROM devis WHERE id_reservation_info =:id_reservation_info');
                                             $stmt80->bindValue('id_reservation_info', $account->id_reservation_info);
                                             $stmt80->execute();
                                             $account80 = $stmt80->fetch(PDO::FETCH_OBJ);
-
-
-
-
                                             if ($account->status == 3) {
-
                                                 ?>
-
-
                                                 <a href="<?php echo $racine; ?>reservation-devis-account.php?xx=<?php echo MD5($account80->id_devis); ?>&xv=<?php echo md5($account->id_reservation_info); ?>"
                                                     class="btn" style="font-size: 10px;padding: 0 14px;margin-bottom: 5px;"><i
                                                         class="icon-edit"></i> Account</a>
                                                 <br>
-
                                                 <?php
-
                                             }
-
-
-
-
-
                                             ?>
-
-
                                         </td>
                                     </tr>
                                     <?php

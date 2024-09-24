@@ -65,6 +65,12 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'cli' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/cli.log'),
+            'level' => 'debug',
+        ],
+
         'daily' => [
             'driver' => 'daily',
             'path' => storage_path('logs/laravel.log'),

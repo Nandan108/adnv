@@ -262,7 +262,7 @@ select:not([multiple]) {
                 </label>
               </div>
 
-              <div class="flex flex-row flex-wrap items-center mt-5 justify-start w-full gap-x-5">
+              <div class="flex flex-row flex-wrap items-center mt-5 justify-between w-full gap-x-5">
                 <a href="#" class="btn-adn-primary text-[85%] w-full sm:w-fit" @click.prevent="hotelSearchFormSubmit()">
                   Lancer la recherche
                 </a>

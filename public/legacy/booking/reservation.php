@@ -396,7 +396,7 @@ function page()
                     </h4>
                 </div>
 
-                <form action="reservations/<?= $reservation->hashid() ?>/confirm" method="POST" name="form2"
+                <form action="reservations/<?= $reservation->hashId() ?>/confirm" method="POST" name="form2"
                     x-on:submit.prevent="submitForm($event)" x-data='pageReservation' x-ref="reserv_form">
 
                     <input type="hidden" name="_token" value="<?= csrf_token() ?>" autocomplete="off">

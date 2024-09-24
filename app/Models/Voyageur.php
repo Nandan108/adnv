@@ -1,6 +1,7 @@
 <?php
 namespace App\Models;
 
+use App\Casts\CarbonParseToIsoDate;
 use App\Traits\HasPersonTypes;
 use Carbon\CarbonImmutable;
 use DateTimeInterface;
@@ -28,7 +29,7 @@ class Voyageur extends Model
 
     protected $casts = [
         'adulte'         => 'boolean',
-        'date_naissance' => 'date:Y-m-d',
+        'date_naissance' => CarbonParseToIsoDate::class,
         'idx'            => 'int',
         'options'        => AsArrayObject::class,
     ];

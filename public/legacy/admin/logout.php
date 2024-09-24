@@ -1,11 +1,8 @@
 <?php
 
-session_start();
-	
+Auth::guard('web')->logout();
 
+$request->session()->invalidate();
+$request->session()->regenerateToken();
 
-session_unset();
-session_destroy();
-header('Location:index.php');
-
-?>
+return redirect('/');

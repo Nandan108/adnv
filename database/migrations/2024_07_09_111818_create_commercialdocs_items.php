@@ -22,6 +22,7 @@ return new class extends Migration
             $table->tinyInteger('qtty')->unsigned()->default(1);
             $table->tinyInteger('discount_pct')->unsigned()->default(0);
             $table->enum('section', ['primary', 'options']);
+            $table->enum('stage', ['initial', 'final'])->default('initial');
             $table->timestamps();
         });
     }

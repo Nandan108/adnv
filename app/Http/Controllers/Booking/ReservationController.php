@@ -2,26 +2,29 @@
 
 namespace App\Http\Controllers\Booking;
 
-use App\Models\Accessibilite;
+use App\Http\Controllers\Controller;
+use App\Mail\NewQuoteNotificationMail;
 use App\Models\Assurance;
-use App\Models\Chambre;
-use App\Models\Prestation;
-use App\Models\Recommandations;
+use App\Models\Commercialdoc;
+use App\Models\Commercialdoc\Quote;
 use App\Models\Reservation;
-use App\Models\Vol;
-use App\Services\HCaptchaService;
-use App\Utils\URL;
+use App\Services\CommercialdocService;
+use App\Services\HotelService;
 use Barryvdh\Debugbar\Facades\Debugbar;
-use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
-use App\Models\Commercialdoc\Quote;
+use Illuminate\Support\Facades\Mail;
+use Inertia\Inertia;
 
-class ReservationController
+class ReservationController extends Controller
 {
+    public function __construct(
+        public CommercialdocService $commercialdocService,
+    ) {}
+
     public function index()
     {
-        return inertia(
+        return Inertia::render(
             'Index/Index',
             [
                 'message' => "Hellow from " . __FUNCTION__
@@ -81,7 +84,7 @@ class ReservationController
 
         // die(json_encode($totals));
 
-        return redirect()->route('reservation.show', $reservation);
+        return redirect()->route('booking.show', $reservation);
 
         // return response()->json([
         //     'success' => true,
@@ -95,368 +98,108 @@ class ReservationController
         // ])->redirect();
     }
 
-    public function legacyShow(Reservation $reservation)
+    public function show(string $booking, Request $request)
     {
-        return redirect("/reservation.php/?rID=" . $reservation->hashid());
-    }
 
-    public function show(string $reservation, Request $request)
-    {
         Debugbar::startMeasure('prepare_reservation', "Full ReservationController.show()");
 
         Debugbar::startMeasure('loading Reservation', "Loading reservation record");
-        $id          = (new Reservation)->hashidToId($reservation);
-        $reservation = Reservation::findOrFail($id);
-        Debugbar::stopMeasure('loading Reservation');
+        $id      = (new Reservation)->hashidToId($booking);
+        $booking = Reservation::findOrFail($id);
 
-        Debugbar::startMeasure('loading Reservation', 'loading $reservation->code_pays');
-        $codePays = $reservation->code_pays;
-        Debugbar::stopMeasure('loading Reservation');
+        $booking->load(
+            'quote',
+            'chambre.hotel.lieu.paysObj',
+            'chambre.monnaieObj',
+            'prixVol.vol.airline',
+            'prixVol.vol.monnaieObj',
+            'transfert',
+            'prestations',
+            'tours.monnaieObj',
+        );
+        $booking->append('personCounts');
 
-        Debugbar::startMeasure('loading Reservation', 'loading $reservation->personCounts');
-        $personCounts = $reservation->personCounts;
-        Debugbar::stopMeasure('loading Reservation');
+        // TODO: split flight-only reservation into their own reservation system, rather than mix
+        // this functionality into hotel reservations, which is senseless complexification.
+        $backUrlData = ($booking->chambre
+            ? ['h' => $booking->chambre->id_hotel]
+            : ['destination' => $booking->code_pays]) + [
+            'du'     => $booking->date_depart,
+            'au'     => $booking->date_retour,
+            'adulte' => $booking->nb_adulte,
+            'ages'   => $booking->ages_enfants,
+            'bebe'   => $booking->babyCount,
+        ];
+        $backUrl     = ($booking->chambre ? '/hotel_detail.php?' : '/hotels.php?') . http_build_query($backUrlData);
 
-        Debugbar::startMeasure('loading Reservation', 'loading $reservation->chambre?->hotel');
-        $hotel = $reservation->chambre?->hotel;
-        Debugbar::stopMeasure('loading Reservation');
+        // Special treatment for participants, as we want to include yet-unpersisted Voyageur records
+        $booking->setRelation('participants', $booking->getAllParticipants());
 
-        $legacyBackUrl = $hotel?->id
-            ? '/hotel_detail.php?' . http_build_query([
-                'h'          => $hotel?->id,
-                'du'         => $reservation->date_depart,
-                'au'         => $reservation->date_retour,
-                'nb_adultes' => $personCounts['adulte'],
-                'ages'       => $reservation->ages_enfants,
-                'nb_bebe'    => $personCounts['bebe'],
-            ])
-            : '/hotels.php?' . http_build_query([
-                'destination' => $codePays,
-                'du'          => $reservation->date_depart,
-                'au'          => $reservation->date_retour,
-                'adulte'      => $personCounts['adulte'],
-                'ages'        => $reservation->ages_enfants,
-                'bebe'        => $personCounts['bebe'],
-            ]);
+        // get everything normalized
+        $normalizedData = collect([$booking])->extractNormalizedRelationsForFrontEnd();
 
-        Debugbar::startMeasure('prepare-data', "Getting insurances");
-        $assurances = Assurance::toutesParPrix(
-            titreSansAssurance: 'Aucune - je ne désire pas souscrire à une assurance voyage.',
-        )->all();
+        Debugbar::startMeasure('prepare-data', "Preparing participant info");
+        $totals = $booking->getTotals();
+        $normalizedData['Traveler']->transform(fn($t, $idx) => (object)[
+            ...$t->toArray(),
+            'totals' => $totals[$idx],
+        ]);
         Debugbar::stopMeasure('prepare-data');
 
-        Debugbar::startMeasure('prepare-data', "Getting countries");
+        Debugbar::startMeasure('prepare-data', "Getting insurances and countries");
+        $titreSansAssurance          = 'Aucune - je ne désire pas souscrire à une assurance voyage.';
+        $normalizedData['Insurance'] = Assurance::toutesParPrix($titreSansAssurance)->all();
         // get countries
-        $listePays = \App\Models\Pays::query()
+        $normalizedData['Country'] = \App\Models\Pays::query()
             // with specific countries first in specified order :
-            ->orderByRaw('IFNULL(NULLIF(FIELD(nom_fr_fr, "Suisse", "France", "Espagne", "Portugal"), 0), 1000), nom_fr_fr')
+            ->orderByRaw("FIELD(nom_fr_fr, 'Suisse', 'France', 'Espagne', 'Portugal') DESC, nom_fr_fr ASC")
             ->get(['code', 'nom_fr_fr']);
         Debugbar::stopMeasure('prepare-data');
 
-        // $prixTours   = $tours->map(fn(Tour $tour) => $tour->getPrixTour($personCounts));
-        Debugbar::startMeasure('prepare-data', "Preparing totals");
-        $totals = $reservation->getTotals();
-        Debugbar::stopMeasure('prepare-data');
-
-        Debugbar::startMeasure('prepare-data', "Preparing participant info");
-        $personLabels = Reservation::PERSON_LABELS;
-        //$participants = $reservation->
-        $participants = $reservation->getAllParticipants();
-        $participants->transform(fn($p, $idx) => (object)[
-            ...$p->unsetRelations()->toArray(),
-            'typePerson' => $totals[$idx]->typePerson['vol'] ?? $totals[$idx]->typePerson['chambre'],
-            'totals'     => $totals[$idx],
-            'label'      => $personLabels[$typePrestation = $p->adulte ? 'adulte' : 'enfant'] . ' ' . ($p->idx + 1),
-            'kebabLabel' => "$typePrestation-$p->idx",
-            'age'        => $p->adulte ? null : $p->getAgeAtDate($reservation->date_depart),
-            'minMaxAge'  => $p->adulte ? null : (($age = $p->getAgeAtDate($reservation->date_depart)) < 2 ? [0, 1] : [$age]),
-            'minMaxBd'   => $p->adulte ? null : $p->BirthdateMinMax,
-        ]);
-        Debugbar::stopMeasure('prepare-data');
-
-        Debugbar::startMeasure('prepare-data', "Preparing repas and prestations");
-        $prestEstRepas = fn($trueOrFalse) => fn(Prestation $p) => $trueOrFalse == $p->type?->is_meal;
-        $repas         = $reservation->prestations->filter($prestEstRepas(true))->first();
-        $prestations   = $reservation->prestations->filter($prestEstRepas(false))->keyBy('id');
-        Debugbar::stopMeasure('prepare-data');
-
-        Debugbar::stopMeasure('prepare_reservation');
-
-        Debugbar::startMeasure("prepare_reservation_data", "Preparing packet for Inertia");
-        $data = [
-            'md5Id'           => $reservation->md5Id,
-            'reservationHash' => $reservation->hashId,
-            'url'             => $legacyBackUrl,
-            'hotel'           => $hotel,
-            'hotelNights'     => $reservation->nbNuitsHotel,
-            'date_depart'     => $reservation->date_depart,
-            'date_retour'     => $reservation->date_retour,
-            'hashId'          => $reservation->hashId(),
-            //'chambre'         => $reservation->chambre,
-            'transfert'       => $reservation->transfert,
-            'volPrix'         => $reservation->volPrix,
-            'tours'           => $reservation->tours->keyBy('id'),
-            'repas'           => $repas,
-            'prestations'     => $prestations,
-            'totals'          => $totals,
-            'titres'          => ['Mr' => 'Monsieur', 'Mme' => 'Madame'],
-            'listePays'       => $listePays,
-            'assurances'      => $assurances,
-            'personLabels'    => $personLabels,
-            'participants'    => $participants,
-            'legacyBackUrl'   => $legacyBackUrl,
+        return Inertia::render('Booking/Reservation', [
+            'normalizedData'  => $normalizedData,
+            //'TravelerTotals'  => $totals,
+            'titles'          => ['Mr' => 'Monsieur', 'Mme' => 'Madame'],
+            'personLabels'    => Reservation::PERSON_LABELS,
+            'hotelDetailURL'  => $backUrl,
             'hcaptchaSitekey' => env('HCAPTCHA_SITEKEY'),
-        ];
-        Debugbar::stopMeasure("prepare_reservation_data");
-
-        return inertia('Booking/Reservation', $data);
+        ]);
     }
 
-
-    public function hotelDetail($hotel_id, Request $request)
+    /**
+     * Extract a date from $date string
+     * @param [type] $date
+     * @return string date in YYYY-mm-dd format
+     */
+    private function getISODate($date): string
     {
-        //$hotel_id       = $request->input('w') ?? $request->input('h') ?? null;
-
-        if ($destination = $request->input('destination') ?? false) {
-            // ancien format
-            $tab         = explode("?", $request->input('destination'));
-            $destination = $tab[0];
-            $date_depart = getISODate($tab[1]);
-            $date_retour = getISODate($tab[2]);
-            //$nb_adultes     = str_replace('adulte=', '', $tab[3]);
-            //$nb_enfants     = str_replace('enfant=', '', $tab[4]);
-            $ages[] = (int)str_replace('enfant1=', '', $tab[5]);
-            $ages[] = (int)str_replace('enfant=', '', $tab[6]);
-            //$nb_bebes       = str_replace('bebe=', '', $tab[7]);
-            $ages = array_filter($ages);
-            sort($ages);
-            $personCounts = collect([
-                'adulte' => (int)str_replace('adulte=', '', $tab[3]),
-                'enfant' => count($ages),
-                'bebe'   => (int)str_replace('bebe=', '', $tab[7]),
-            ]);
-        } else {
-            $date_depart = getISODate($request->input('du'));
-            $date_retour = $dai = getISODate($request->input('au'));
-            // $nb_adultes   = (int) ($request->input('nb_adultes') ?? 0 ?: $request->input('adulte') ?: 0);
-            // $nb_enfants   = (int) ($request->input('nb_enfants') ?? 0 ?: $request->input('enfant') ?: 0);
-            // $nb_bebes     = (int) ($request->input('nb_bebes') ?? 0 ?: $request->input('bebe') ?: 0);
-            $ages = array_filter(is_array($ages = $request->input('ages') ?? []) ? $ages : explode(',', $ages));
-            sort($ages);
-            $personCounts = collect([
-                'adulte' => (int)($request->input('nb_adultes') ?? 0 ?: $request->input('adulte') ?? 0),
-                'enfant' => count($ages),
-                'bebe'   => (int)($request->input('nb_bebes') ?? 0 ?: $request->input('bebe') ?? 0),
-            ]);
+        if (
+            preg_match('/\b((?P<Y>\d{4})-(?P<M>\d\d)-(?P<D>\d\d) |
+                     (?P<d>\d\d)-(?P<m>\d\d)-(?P<y>\d{4}))\b/x', $date, $match)
+        ) {
+            $y = $match['Y'] ?: $match['y'];
+            $m = $match['M'] ?: $match['m'];
+            $d = $match['D'] ?: $match['d'];
+            return "$y-$m-$d";
         }
+        return false;
+    }
 
-        /* TODO: $tempReservation = new Reservation([
-         *  'personCounts' => $personCounts,
-         *  'hotel_id' => $hotel_id,
-         *   ...
-         * ]);
-         * // then get prices with
-         * $participants = $tmpReservations->getAllParticipants();
-         * $pricingPersonCounts = $chambre->getPersonCountsForPricing($participants)
-         * $chambre->getPrixNuit(personCounts: $pricingPersonCounts, ...)
-         * // even better change it to getPrixNuit(Collection $voyageurs, ...) and use getPersonCountsForPricing() in it.
-         */
-
-        $url = http_build_query([
-            'du'   => $date_depart,
-            'au'   => $date_retour,
-            ...(array)$personCounts,
-            'ages' => $ages,
+    public function hotelDetail($hotel_id, Request $request, HotelService $hotelService)
+    {
+        $code_pays    = $request->input('destination');
+        $date_depart  = getISODate($request->input('du'));
+        $date_retour  = getISODate($request->input('au'));
+        $tripDates    = [$date_depart, $date_retour];
+        $ages         = array_filter(is_array($ages = $request->input('ages') ?? []) ? $ages : explode(',', $ages));
+        $personCounts = collect([
+            'adulte' => (int)($request->input('adulte') ?? 0),
+            'enfant' => count($ages),
+            'bebe'   => (int)($request->input('bebe') ?? 0),
         ]);
+        sort($ages);
 
-        // $adulte = $nb_adultes; $enfant = $nb_enfants; $bebe = $nb_bebes;
-        // MARK: DB QUERY
-        /** @var \App\Models\Hotel */
-        $hotel = \App\Models\Hotel::query()
-            ->select([
-                ...['id', 'id_lieu', 'nom', 'etoiles', 'situation', 'photo', 'repas', 'coup_coeur', 'decouvrir', 'slug', 'adresse'],
-                //...['age_minimum',] // TODO: Check if this field is being used.
-                /*,'postal_code','tel','mail',*/
-            ])
-            ->agesValid($ages)
-            // get all rooms (valid according to arrival date)
-            ->withWhereHas(
-                'chambres',
-                fn(Builder $q) => $q->valid($date_depart, $date_retour, $personCounts)
-                    ->select([
-                        ...['id_hotel', 'id_chambre', 'nom_chambre', 'photo_chambre', 'monnaie', 'taux_commission', '_villa'],
-                        ...['debut_validite', 'fin_validite'],
-                        ...['_adulte_1_net', '_adulte_2_net', '_adulte_3_net', '_adulte_4_net'],
-                        ...['_enfant_1_net', '_enfant_2_net', '_age_max_petit_enfant'],
-                        ...['_bebe_1_net'],
-                        ...['remise', 'debut_remise_voyage', 'fin_remise_voyage'],
-                        ...['remise2', 'debut_remise2_voyage', 'fin_remise2_voyage'],
-                    ])
-            )
-            // get all meal and other services
-            ->with([
-                'prestationsAutres' => fn($t) => $t->validPrestation($date_depart, $date_retour)
-                    ->orderBy('obligatoire', 'desc')
-                    ->orderBy('adulte_net', 'desc'),
-                'prestationsRepas'  => fn($t)  => $t->validRepas($date_depart)
-                    ->orderBy('obligatoire', 'desc')
-                    ->orderBy('adulte_net', 'desc')
-            ])
-            // get all tours happening in same Ville
-            ->with('lieu.memeVilleLieux', fn($lieu) => $lieu
-                ->withWhereHas('tours', fn($t) => $t->with('partenaire')->valid($date_depart)))
-            // get all transferts to this hotel
-            ->with([
-                'transferts' => fn($t) => $t->valid($date_depart)
-                    ->with(['aeroport', 'partenaire']),
-                // get all flights arriving in same region
-                'lieu.paysObj',
-                'lieu.memeRegionLieux.aeroports',
-            ])
-            ->find($hotel_id);
-
-        if (!$hotel) {
-            include '404.php';
-            if (config('app.debug')) {
-                $toDump = [
-                    // 'pageData'  => json_encode($pageData ?? null, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-                    // 'Query log' => getQueryLog(),
-                ];
-                if ($toDump) debug_dump($toDump);
-            }
-            return;
-        }
-
-        $_page_subtitle = "RESERVATION : $hotel->nom";
-        // get all airports in the same region as the hotel
-        $regionAeroports = $hotel->lieu->memeRegionLieux->flatMap(fn($lieu) => $lieu->aeroports);
-        // get all airports that connect to the hotel via a transfert
-        $transfertAeroports = $hotel->transferts->map(fn($transfert) => $transfert->aeroport);
-        // UNION the two lists of airports defined above
-        $aeroports = $transfertAeroports->union($regionAeroports)->unique('id_aeroport');
-
-        // get all valid Commercial flights that arrive at one of the airports in the UNION list
-        $aeroports->load([
-            'vols_arrive' => fn($query) => $query
-                ->validDatePeriod($date_depart)
-                ->flightType(Vol::FLIGHT_TYPE_COMMERCIAL)
-                ->with([
-                    'prix',
-                    'airline',
-                    'apt_depart'  => fn($q)  =>
-                        $q->select(['code_aeroport', 'aeroport', 'id_lieu'])->with('lieu'),
-                    'apt_transit' => fn($q) =>
-                        $q->select(['code_aeroport', 'aeroport', 'id_lieu'])->with('lieu'),
-                    'apt_arrive'  => fn($q)  =>
-                        $q->select(['code_aeroport', 'aeroport', 'id_lieu'])->with('lieu'),
-                ])
-        ]);
-        $vols = $aeroports->flatMap(fn($apt) => $apt->vols_arrive);
-
-        $codes_apt_arrive = $hotel->transferts->pluck('dpt_code_aeroport')->unique();
-
-        $datesVoyage = [$date_depart, $date_retour];
-        // TODO: $datesHotel[0] -= least($vols->arrive_next_day)
-        // TODO: datesHotel should be a front-end computed()
-        $datesHotel = [$date_depart, $date_retour];
-
-        $listeChambres = $hotel->chambres->map(
-            fn(Chambre $chambre) => $chambre->getPrixNuit(
-                personCounts: $personCounts,
-                agesEnfants: $ages,
-                datesStay: $datesHotel,
-                prixParNuit: true,
-            )
-        )->keyBy('id');
-
-        $infoPrestations = $hotel->prestationsAutres
-            ->map(
-                fn(Prestation $r) => $r->getInfo(
-                    personCounts: $personCounts,
-                    datesVoyage: $datesHotel,
-                )
-            )->sortBy('total');
-
-        $infoRepas = $hotel->prestationsRepas
-            ->map(
-                fn(Prestation $r) => $r->getInfo(
-                    personCounts: $personCounts,
-                    datesVoyage: $datesHotel,
-                )
-            )->sortBy('total');
-        // die(dd(json_encode($infoRepas, JSON_PRETTY_PRINT)));
-
-        // $infoRepas = $allPrestations->filter(fn($prestInfo) => $prestInfo->prestation->type->is_meal);
-        // $infoPrestations = $allPrestations->filter(fn($prestInfo) => !$prestInfo->prestation->type->is_meal);
-
-        $prixTransferts = $hotel->transferts
-            // TODO: Dynamically hide (un-select if needed) uncompatible transferts
-            // after a flight is chosen
-            ->map(fn($t) => $t->getPrixTransfert($personCounts, $hotel->nom));
-
-        //$lieuxAeroports = $hotel->lieu->memeRegionLieux->withoutRelations();
-        $aeroports = $vols
-            ->flatMap(fn($vol) => array_filter([
-                $vol->apt_depart,
-                $vol->apt_transit,
-                $vol->apt_arrive,
-            ]));
-        $lieuxApt  = $aeroports->map(fn($apt) => $apt->lieu)->keyBy('id_lieu');
-        $aeroports = $aeroports->keyBy('code_aeroport')
-            ->each(function ($apt) {
-                $apt->ville     = $apt->lieu->ville;
-                $apt->full_name = "$apt->code_aeroport / {$apt->lieu->ville} ({$apt->aeroport})";
-                $apt->unsetRelation('lieu');
-            });
-
-        $infoVols = $vols->flatMap(
-            fn($vol) =>
-            $vol->prix->map(function ($prix) use ($vol, $personCounts, $datesVoyage) {
-                $infoVols = $vol->getInfoVol($personCounts, $prix, $datesVoyage[0]);
-                $url = URL::get()->setRelative();
-                foreach ($infoVols->datesDeparts as $diff => $dd) {
-                    if ($diff) {
-                        $url->setParams([
-                            'du' => $dd->date,
-                            'au' => fmtDate('y-MM-dd', dateAddDays($datesVoyage[1], $diff)),
-                        ]);
-                        $infoVols->datesDeparts[$diff]->url = "$url";
-                    }
-                }
-                return $infoVols;
-            })
-        )->sort(
-                fn($vA, $vB) =>
-                empty ($vA->datesDeparts[0]) <=> empty ($vB->datesDeparts[0]) ?:
-                $vA->total <=> $vB->total
-            )->values();
-
-        $prixTours = $hotel->lieu->memeVilleLieux
-            ->flatMap(fn($lieu) => $lieu->tours->map(fn($tour) => $tour->getPrixTour($personCounts)))
-            ->sortBy('total')
-            ->values();
-
-        $chambresParHotel = $hotel->chambres;
-        $ville            = $hotel->lieu->ville;
-        $pays             = $hotel->lieu->paysObj;
-
-
-        $visas = [
-            'prix'        => [
-                'adulte' => $pays->visa_adulte,
-                'enfant' => $pays->visa_enfant,
-                'bebe'   => $pays->visa_bebe,
-            ],
-            'totals'      => $visaTotals = [
-                'adulte' => $pays->visa_adulte * $personCounts['adulte'],
-                'enfant' => $pays->visa_enfant * $personCounts['enfant'],
-                'bebe'   => $pays->visa_bebe * $personCounts['bebe'],
-            ],
-            'obligatoire' => !!($pays->visa_adulte + $pays->visa_enfant + $pays->visa_bebe), // TODO: remove field
-            'total'       => array_sum($visaTotals),
-        ];
-
-        $nbNuits = count($listeChambres) ? $listeChambres->first()->nbNuits : 0;
+        $hotelDetailInfo = $hotelService->getHotelDetailInfo($hotel_id, $tripDates, $personCounts, $ages);
 
         // MARK: Tabs
         /** @var Collection<string, StdClass */
@@ -466,7 +209,7 @@ class ReservationController
                 'displayName' => 'vol',
                 'a'           => 'un',
                 'label'       => 'Vol',
-                'count'       => count($infoVols),
+                'count'       => count($hotelDetailInfo['infoVols']),
                 'file'        => 'vol.php',
                 'icon'        => 'plane',
                 'titre'       => 'vol|vols',
@@ -476,7 +219,7 @@ class ReservationController
                 'displayName' => 'chambre',
                 'a'           => 'une',
                 'label'       => 'Chambre',
-                'count'       => count($chambresParHotel),
+                'count'       => count($hotelDetailInfo['chambresParHotel']),
                 'file'        => 'chambre.php',
                 'icon'        => 'bed',
                 'titre'       => 'chambre|chambres',
@@ -487,14 +230,12 @@ class ReservationController
                 'displayName'    => 'repas',
                 'a'              => 'un',
                 'label'          => 'Repas',
-                'count'          => count($infoRepas),
+                'count'          => count($hotelDetailInfo['prixRepas']),
                 'file'           => 'repas.php',
                 'icon'           => 'glass',
                 'titre'          => 'repas|repas',
                 'maxChoices'     => 1,
-                'obligatoires'   => $infoRepas
-                    ->filter(fn($r)   => $r->obligatoire)
-                    ->map(fn($r)   => $r->id),
+                'obligatoires'   => $hotelDetailInfo['mandatoryMealIds'],
                 'requiresChoice' => 'chambre',
                 'dataSource'     => 'prixRepas',
             ],
@@ -504,7 +245,7 @@ class ReservationController
                 'displayName'    => 'prestation',
                 'a'              => 'une',
                 'label'          => 'Prestation',
-                'count'          => count($infoPrestations),
+                'count'          => count($hotelDetailInfo['prixPrestations']),
                 'file'           => 'prestation.php',
                 'icon'           => 'chain',
                 'titre'          => 'prestation|prestations',
@@ -518,7 +259,7 @@ class ReservationController
                 'displayName' => 'transfert',
                 'a'           => 'un',
                 'label'       => 'Transfert',
-                'count'       => count($prixTransferts),
+                'count'       => count($hotelDetailInfo['prixTransferts']),
                 'file'        => 'transfert.php',
                 'icon'        => 'car',
                 'titre'       => 'transfert|transferts',
@@ -528,7 +269,7 @@ class ReservationController
                 'displayName' => 'tour/excursion',
                 'a'           => 'un',
                 'label'       => 'Tour',
-                'count'       => count($prixTours),
+                'count'       => count($hotelDetailInfo['prixTours']),
                 'file'        => 'tours.php',
                 'icon'        => 'bookmark',
                 'titre'       => 'tour|tours',
@@ -536,7 +277,7 @@ class ReservationController
                 // Ca devrait dépendre de la durée du séjour, non ?
                 // Réponse probable: pour pas se compliquer la vie (code bordelique).
                 // Nombre max d'excursions possible: min(5, $nbNuits - 2)
-                'maxChoices'  => $maxTourChoice = min(5, $nbNuits - 2),
+                'maxChoices'  => $maxTourChoice = min(5, $hotelDetailInfo['nbNuits'] - 2),
             ],
         ])->map(fn($tab) => (object)$tab)
             ->filter(fn($tab) => $tab->count)->values()
@@ -550,31 +291,9 @@ class ReservationController
         // DEBUG: show tours first
         //if ($_ENV['APP_DEBUG']) $tabs = $tabs->sortBy(fn($tab) => $tab->nom !== 'tour');
 
-        return inertia(
+        return Inertia::render(
             'Booking/HotelDetail',
-            [
-                'pays'               => $pays,
-                'personLabels'       => Reservation::PERSON_LABELS,
-                'personCounts'       => $personCounts,
-                'datesVoyage'        => $datesVoyage,
-                'datesHotel'         => $datesHotel,
-                'nbNuits'            => $nbNuits,
-                'tabs'               => $tabs,
-                'hotel'              => $hotel->withoutRelations(),
-                'agesEnfants'        => $ages,
-                'listeChambres'      => $listeChambres,
-                'prixRepas'          => $infoRepas->values(),
-                'infoVols'           => $infoVols,
-                'visas'              => $visas,
-                'classesReserv'      => Vol::CLASS_RESERVATION,
-                'prixPrestations'    => $infoPrestations->values(),
-                'aeroports'          => $aeroports,
-                'lieuxApt'           => $lieuxApt,
-                'prixTransferts'     => $prixTransferts,
-                'prixTours'          => $prixTours,
-                'allRecommandations' => Recommandations::all()->pluck('description', 'id'),
-                'allAccessibilites'  => Accessibilite::all()->pluck('description', 'code'),
-            ],
+            $hotelDetailInfo,
         );
     }
 
@@ -588,31 +307,34 @@ class ReservationController
                 $reservation->participants()->save($p);
             }
 
-            $participant = (object)[
-                ...$p->unsetRelations()->toArray(),
-                'totals'     => $reservation->getTotals($travelerIdx),
-                'age'        => $p->adulte ? null : $p->getAgeAtDate($reservation->date_depart),
+            $normalizedData = collect([$p])->extractNormalizedRelationsForFrontEnd();
+
+
+            $normalizedData['Traveler'][0] = [
+                ...$normalizedData['Traveler'][0]->toArray(),
+                'booking_type' => 'booking',
+                'totals'       => $reservation->getTotals($travelerIdx),
+                'age'          => $p->adulte ? null : $p->getAgeAtDate($reservation->date_depart),
             ];
 
-            return response()->json($participant);
+            return response()->json($normalizedData);
         }
     }
 
     // voir /var/www/myprivateboutique.ch/adnv/booking/Devis_paiement_Facture.php
-    public function confirmReservation(Reservation $reservation, Request $request, HCaptchaService $captchaService)
-    {
+    public function confirmReservation(
+        Reservation $reservation,
+        Request $request
+    ) {
         if ($quote = $reservation->load('quote')->quote) {
             return redirect()->route("reservation.quote.show", $quote);
-        }
-
-        if (!$captchaService->verify($request->input('captchaToken'))) {
-            return back()->withErrors(['captcha' => 'CAPTCHA verification failed.']);
         }
 
         $clientInfo = $request->validate([
             'remarques'    => 'string|max:1024',
             'lastname'     => "required|string|max:45",
             'firstname'    => "required|string|max:30",
+            'title'        => "required|string|max:10",
             'email'        => "required|string|max:30",
             'phone'        => "required|string|max:30",
             'street'       => "required|string|max:200",
@@ -627,17 +349,83 @@ class ReservationController
         return redirect()->route("reservation.quote.show", $quote);
     }
 
+    public function mailQuoteLink(Quote $quote)
+    {
+        $mail = new NewQuoteNotificationMail($quote);
+
+        Mail::to($quote->email)
+            ->cc($bcc = env("COMMERCIAL_ADMIN_EMAIL"))
+            ->send($mail);
+    }
+
+    public function showQuoteMail(Quote $quote)
+    {
+        $html = (new NewQuoteNotificationMail($quote))->content();
+        return response($html->html);
+    }
+
+    public function validateQuote(Quote $quote)
+    {
+        $sentMessage = $this->commercialdocService->clientValidatesQuote($quote);
+
+        // $html = (new ClientNotificationMail("Devis N°$quote->doc_id validé", <<<EOF
+        //     {{ $quote->longTitle }} {{ $quote->lastname }},
+        //     Nous vous remercions d'avoir validé notre devis n°$quote->doc_id.
+        //     Votre facture et autres documents vous seront envoyé sous 3 jours ouvrable.
+        // EOF))->build()->buildView()['html'];
+
+        $successError = $sentMessage ? 'success' : 'error';
+        $message = $sentMessage ? <<<EOF
+                <p>Nous vous remercions d'avoir validé notre devis n°$quote->doc_id.</p>
+                <p>Votre facture et autres documents vous seront envoyé sous 3 jours ouvrable.</p>
+            EOF :
+            "La confirmation de votre validation n'a pas pu vous être envoyé.";
+
+        $flash = [$successError => $message];
+
+        return redirect()->back()->with($successError, $message);
+    }
+
     public function showQuote(Quote $quote)
     {
-
-        return inertia(
-            'Booking/InitialQuote',
+        $normalizedData = collect([$quote])->extractNormalizedRelationsForFrontEnd();
+        return Inertia::render(
+            'Booking/FinalQuote',
             [
-                'quote'   => $quote,
-                // 'headerInfo' => $quote->headerLines,
-                'message' => <<<EOF
-                EOF,
+                'finalQuote' => false,
+                'data' => $normalizedData,
+                //'data'   => collect([$quote])->extractNormalizedRelationsForFrontEnd(),
+                'message' => '',
             ],
         );
     }
+
+    public function showFinalQuote(Quote $quote)
+    {
+        //$quote->append($quote->getAppends());
+        $normalizedData = collect([$quote])->extractNormalizedRelationsForFrontEnd();
+
+        return Inertia::render(
+            'Booking/FinalQuote',
+            [
+                'finalQuote' => true,
+                //'quote'  => $quote,
+                'data' => $normalizedData,
+            ],
+        );
+    }
+    public function showInvoice(Commercialdoc $invoice)
+    {
+        $invoice->append($invoice->getAppends());
+        $normalizedData = collect([$invoice])->extractNormalizedRelationsForFrontEnd();
+
+        return Inertia::render(
+            'Booking/Invoice',
+            [
+                //'quote'  => $quote,
+                'data' => $normalizedData,
+            ],
+        );
+    }
+
 }

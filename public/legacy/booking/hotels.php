@@ -347,10 +347,10 @@ function page()
                                                         $chambre          = $hotel->chambres->first();
                                                         $compteNomChambre = count($hotel->chambres->groupBy('nom_chambre'));
                                                         $prix             = $chambre->getPrixNuit(
-                                                            personCounts: $personCounts,
+                                                            tarifPersonCounts: $personCounts,
                                                             agesEnfants: $ages,
-                                                            datesStay: [$dd, $dai],
-                                                            prixParNuit: true,
+                                                            stayDates: [$dd, $dai],
+                                                            getPerNight: true,
                                                         );
                                                         if (!$prix) continue;
                                                         $prix_chambre       = ceil($prix->brut->totals->adulte / $personCounts['adulte']);

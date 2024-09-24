@@ -53,8 +53,9 @@ function page()
         sort($ages);
         $personCounts = collect([
             'adulte' => (int)($_GET['nb_adultes'] ?? 0 ?: $_GET['adulte'] ?? 0),
-            'enfant' => count($ages),
-            'bebe'   => (int)($_GET['nb_bebes'] ?? 0 ?: $_GET['bebe'] ?? 0),
+            'enfant' => count(array_filter($ages, fn($a) => $a >= 2)),
+            'bebe'   => count(array_filter($ages, fn($a) => $a < 2)) ?:
+                (int)($_GET['nb_bebes'] ?? 0 ?: $_GET['bebe'] ?? 0),
         ]);
     }
 
@@ -158,10 +159,10 @@ function page()
 
     $listeChambres = $hotel->chambres->map(
         fn(Chambre $chambre) => $chambre->getPrixNuit(
-            personCounts: $personCounts,
+            tarifPersonCounts: $personCounts,
             agesEnfants: $ages,
-            datesStay: $datesVoyage,
-            prixParNuit: true,
+            stayDates: $datesVoyage,
+            getPerNight: true,
         )
     )->keyBy('id');
 

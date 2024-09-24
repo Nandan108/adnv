@@ -24,6 +24,10 @@
 
     }
 
+    a {
+        @apply text-blue-500;
+    }
+
     .text-adn-orange {
         color: var(--adn-orange);
     }
@@ -63,11 +67,28 @@
         @apply block w-fit text-adn-orange bg-white text-sm font-normal py-5 px-5 text-center justify-center border border-[var(--adn-orange)];
     }
 
+    .btn {
+        @apply text-white text-center px-2 py-1 mx-1 rounded-md shadow shadow-gray-500 cursor-pointer inline-block;
+    }
+
+    .btn.btn-action {
+        @apply bg-blue-400 border-blue-600
+    }
+    .btn.btn-success {
+        @apply bg-green-500 border-green-600
+    }
+    .btn.btn-danger {
+        @apply bg-red-500 border-red-600
+    }
+
     .form-ctl {
         @apply block w-full p-1.5 text-base leading-6 text-gray-700 bg-white
             border border-gray-300 rounded-md
             transition duration-150 ease-in-out
             focus:border-gray-500 focus:ring-0
+    }
+    .form-ctl:disabled {
+        @apply bg-slate-200
     }
 
     .input-error {
@@ -79,6 +100,9 @@
 @layer utilities {
     .text-shadow {
         text-shadow: 2px 2px 7px rgba(0, 0, 0, 0.27);
+    }
+    .container {
+        @apply mx-auto md:max-w-[80vw];
     }
 }
 

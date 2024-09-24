@@ -21,7 +21,7 @@
 
 <script setup>
 import { isNull } from 'lodash';
-import { computed, defineProps, inject } from 'vue'
+import { computed, inject } from 'vue'
 
 const defaults = inject('AlignedPriceDefaults');
 defaults.locale ??= 'de-CH';

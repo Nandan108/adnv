@@ -92,9 +92,9 @@ class QuoteController extends Controller
 
         // Add client details
         $html .= '<h2>Client Details</h2>';
-        $tripInfos = $doc->getInfo('trip_info');
-        foreach ($tripInfos as $tripInfo) {
-            $html .= '<p>' . $tripInfo->info . '</p>';
+        $travelers = $doc->getInfo('traveler_line');
+        foreach ($travelers as $traveler) {
+            $html .= "<p>{$travelers->name} $travelers->ticket</p>";
         }
 
         // Add invoice details

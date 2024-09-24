@@ -44,6 +44,14 @@ export default defineConfig({
     resolve: {
         alias: {
             ziggy: path.resolve('vendor/tightenco/ziggy/dist/index.js'),
+            // Couldn't get vscode to auto-import and recognize "@/" prefix,
+            // So instead, let the compiler recognize auto-imported paths!
+            Components: path.resolve('resources/js/Components'),
+            Layouts: path.resolve('resources/js/Layouts'),
+            Pages: path.resolve('resources/js/Pages'),
+            models: path.resolve('resources/js/models'),
+            services: path.resolve('resources/js/services'),
+            stores: path.resolve('resources/js/stores'),
         }
     }
 });

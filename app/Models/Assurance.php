@@ -27,11 +27,12 @@ class Assurance extends Model
 
     protected $casts = [
         'prix_assurance' => 'float',
-        'prix_minimum' => 'float',
-        'pourcentage' => 'float',
+        'prix_minimum'   => 'float',
+        'pourcentage'    => 'float',
     ];
 
-    public function prix($total) {
+    public function prix($total)
+    {
         if ($this->duree === 'voyage') {
             return max($this->prix_minimum, round(($total * $this->pourcentage / 100)));
         } else {
@@ -41,18 +42,21 @@ class Assurance extends Model
 
     //max($assurance->prix_minimum, round(($total_adulte * $assurance->pourcentage / 100), 1))
 
-    public static function toutesParPrix($titreSansAssurance = null): Collection {
+    public static function toutesParPrix($titreSansAssurance = null): Collection
+    {
         $assurances = Assurance::query()
             ->orderBy('prix_assurance')
             ->orderBy('pourcentage')
             ->get();
 
         if ($titreSansAssurance) {
-            $assurances->prepend(new Assurance([
-                'id' => 0,
+
+            $assurance     = new Assurance([
                 'titre_assurance' => $titreSansAssurance,
-                'prix_assurance' => 0,
-            ]));
+                'prix_assurance'  => 0,
+            ]);
+            $assurance->id = 0; // PK not a fillable
+            $assurances->prepend($assurance);
         }
 
         return $assurances;

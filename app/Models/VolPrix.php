@@ -4,6 +4,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 
+// TODO: rename to FlightFare
+// TODO: rename table to flight_fares
 class VolPrix extends Model
 {
     public $timestamps = false;

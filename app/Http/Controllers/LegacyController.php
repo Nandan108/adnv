@@ -36,8 +36,8 @@ class LegacyController extends Controller
     protected function executePhpFile($path, $request)
     {
         ob_start();
-        include $path;
-        $content = ob_get_clean();
+        $result = include $path;
+        $content = ob_get_clean() ?: $result;
 
         return response($content);
     }

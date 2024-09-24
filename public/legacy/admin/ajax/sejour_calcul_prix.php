@@ -1,8 +1,8 @@
 ﻿<?php
 $__layout = false;
-require_once '../admin_init.php';
+require_once dirname(__DIR__).'/admin_init.php';
 
-$totaux = (new \App\CalculateurSejour)->calculTotaux(
+$totaux = (new \App\AdminLegacy\CalculateurSejour)->calculTotaux(
     id_vol:         $_GET['id_vol'],
     id_chambre:     $_GET['id_chambre'],
     nb_nuits:       $_GET['nb_nuits'],

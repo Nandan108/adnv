@@ -4,7 +4,10 @@
       "paths": {
         "@/*": [
           "resources/js/*"
-        ]
+        ],
+        // "models/*": [
+        //   "./resources/js/models/*"
+        // ],
       },
       "jsx": "preserve"
     },

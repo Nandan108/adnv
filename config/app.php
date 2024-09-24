@@ -2,9 +2,6 @@
 
 $production = ($env = env('APP_ENV', 'production')) === 'production';
 
-if (!$production) {
-
-}
 preg_match('/(booking|admin)/i', $_SERVER['HTTP_HOST'] ?? '', $matches);
 $request_app = $matches[1] ?? null;
 
@@ -62,11 +59,15 @@ return [
 
     'admin_url'       => $adminUrl = env('ADMIN_URL'),
     'admin_domain'    => parse_url($adminUrl, PHP_URL_HOST),
+
     'booking_url'     => $bookingUrl = env('BOOKING_URL'),
     'booking_domain'  => parse_url($bookingUrl, PHP_URL_HOST),
+
     'dev_url'         => env('DEV_URL', '127.0.0.1:8000'),
+
     'request_app'     => $request_app,
-    'dev_domain'      => env('DEV_DOMAIN'),
+
+    'dev_dflt_domain' => env('DEV_DEFAULT_DOMAIN'),
 
     'url'             => $bookingUrl,
 

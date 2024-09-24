@@ -672,7 +672,8 @@ foreach ($lieux as $lieu) {
                                                         </div>
                                                     <?php
                                                     } else if ($var_type_personne[2] === 'enfant') {
-
+                                                        $champAgeEnfantDe = 'simple_enfant_1_agemin';
+                                                        $champAgeEnfantA = 'simple_enfant_1_agemax';
                                                         ?>
                                                             <div class="span5">
                                                                 <div class="form-group">

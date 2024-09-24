@@ -1,199 +1,207 @@
 <?php
-use Illuminate\Support\Facades\DB;
-
-// disable auto-layout
-$__layout = false;
 require 'admin_init.php';
 
-use App\Utils\URL;
+$counts = [
+    'pays' => \App\Models\Pays::count(),
+    'hotels' => \App\Models\Hotel::count(),
+    'vols' => \App\Models\Vol::count(),
+    'circuits' => \App\Models\Circuit::count(),
+    'croisieres' => \App\Models\Croisiere::count(),
+    'transfert' => \App\Models\Transfert::count(),
+    'tours' => \App\Models\Tour::count(),
+    'sejours' => \App\Models\Sejour::count(),
+    // 'package_manuel'
+    // 'package_manuel_vol'
+];
 
-$redirUrl = URL::base64_decode($_GET['redir'] ?? '') ?: 'accueil.php';
-
-if (isset($_POST['remember'])) {
-    if ($_POST['remember'] == "1") {
-        cookie("member_login_HTTP", $_POST["pseudo"], time() + (10 * 3600 * 24 * 10));
-    } else {
-        if (request()->cookie('member_login_HTTP'))
-            cookie()->forget("member_login_HTTP");
-    }
-}
-
-if (isset($_POST['valider'])) {
-    if (!empty($_POST['pseudo']) AND !empty($_POST['password'])) {
-        $credentials = [
-            'account_login' => $_POST['pseudo'],
-            'account_pass' => MD5($_POST['password']),
-        ];
-
-        $stmt = $conn->prepare(
-            'SELECT * FROM admin
-            WHERE account_login = :account_login AND account_pass = :account_pass
-        ');
-        $stmt->execute($credentials);
-        $account = $stmt->fetch(PDO::FETCH_OBJ);
-
-        if (isset($account->account_login)) {
-            session([
-                'account_login' => $credentials['account_login'],
-                'account_pass' => $credentials['account_pass'],
-            ]);
-            session()->save();
-
-            // redirection après login
-            $url = URL::get($redirUrl);
-            $url->redirect();
-        } else {
-            echo '<script type="text/javascript">alert("Votre identifiant ou votre mot de passe est incorrect")</script>';
-        }
-    } else {
-        echo '<script type="text/javascript">alert("Veuillez remplir tous les champs")</script>';
-    }
-}
-
-$login = request()->cookie('member_login_HTTP');
+$hotels = \App\Models\Hotel::with('lieu.paysObj')
+    ->orderBy('id', 'desc')
+    ->limit(8)
+    ->get();
 
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-    <title>ADN | Page d'authentification</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<section id="my-account-security-form" class="page container">
+    <div class="container">
+        <div class="alert alert-block alert-info">
+            <legend class="lead">
+                Bienvenue
+            </legend>
+            <p>
+                Bienvenue sur l' interface d'administration du site de ADN Voyage. Dans cet interface vous pouvez gérer
+                plusieurs fonctionnalités à savoir la gestion des vols, hôtels, circuits, croisières, transferts,...
+                Vous pouvez égelement gérer votre profil.
+            </p>
+        </div>
+    </div>
+</section>
+<section class="page container">
+    <div class="row">
 
-    <meta name="layout" content="main"/>
+        <div class="span16">
+            <div class="box">
+                <div class="box-header">
+                    <i class="icon-bookmark"></i>
+                    <h5>Resumé chiffré de la base de donnée</h5>
+                </div>
+                <div class="box-content" style="text-align: center;">
+                    <div class="btn-group-box">
+                        <button class="btn"><a href="lieu.php" style="text-decoration: none;color : #555555"><i
+                                    class="icon-globe icon-large" style="font-size: 40px"></i><br />
+                                Pays <span class="compte-span">
+                                    <?= $counts['pays'] ?>
+                                </span>
+                            </a></button>
 
-    <script type="text/javascript" src="http://www.google.com/jsapi"></script>
+                        <button class="btn"><a href="hotels.php" style="text-decoration: none;color : #555555"><i
+                                    class="icon-tasks icon-large" style="font-size: 40px"></i><br />
+                                Hôtels<span class="compte-span">
+                                    <?= $counts['hotels'] ?>
+                                </span></a></button>
 
-    <script src="../js/jquery/jquery-1.8.2.min.js" type="text/javascript" ></script>
-    <link href="../css/customize-template.css" type="text/css" media="screen, projection" rel="stylesheet" />
+                        <button class="btn"><a href="vols.php" style="text-decoration: none;color : #555555"><i
+                                    class="icon-plane icon-large" style="font-size: 40px"></i><br />
+                                Vols<span class="compte-span">
+                                    <?= $counts['vols'] ?>
+                                </span></a></button>
 
-    <style>
-    </style>
-</head>
-    <body class='pattern pattern-sandstone'>
-        <div class="navbar navbar-fixed-top">
-            <div class="navbar-inner">
-                <div class="container">
-                    <button class="btn btn-navbar" data-toggle="collapse" data-target="#app-nav-top-bar">
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
+                        <button class="btn"><a href="circuits.php" style="text-decoration: none;color : #555555"><i
+                                    class="icon-map-marker icon-large" style="font-size: 40px"></i><br />
+                                Circuits<span class="compte-span">
+                                    <?= $counts['circuits'] ?>
+                                </span></a></button>
+
+                        <button class="btn"><a href="croisieres.php" style="text-decoration: none;color : #555555"><i
+                                    class="icon-list-alt icon-large" style="font-size: 40px"></i><br />
+                                Croisières<span class="compte-span">
+                                    <?= $counts['croisieres'] ?>
+                                </span></a></button>
+
+                        <button class="btn"><a href="transferts.php" style="text-decoration: none;color : #555555"><i
+                                    class="icon-bar-chart icon-large" style="font-size: 40px"></i><br />
+                                Transferts<span class="compte-span">
+                                    <?= $counts['transfert'] ?>
+                                </span></a></button>
+
+                        <button class="btn"><a href="excursions.php" style="text-decoration: none;color : #555555"><i
+                                    class="icon-bookmark icon-large" style="font-size: 40px"></i><br />
+                                Excursions<span class="compte-span">
+                                    <?= $counts['tours'] ?>
+                                </span></a></button>
+
+                        <button class="btn"><a href="package.php?order&page=1"
+                                style="text-decoration: none;color : #555555"><i class="icon-calendar icon-large"
+                                    style="font-size: 40px"></i><br />
+                                Séjours<span class="compte-span">
+                                    <?= $counts['sejours'] ?>
+                                </span></a></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="span8">
+            <div class="box pattern pattern-sandstone">
+                <div class="box-header">
+                    <i class="icon-tasks"></i>
+                    <h5>Dérniers hôtels enregistrés</h5>
+                    <button class="btn btn-box-right" data-toggle="collapse" data-target=".box-list">
+                        <i class="icon-reorder"></i>
                     </button>
-                    <a href="dashboard.html" class="brand"><img src="../images/logo2.png"></a>
-                    <div id="app-nav-top-bar" class="nav-collapse">
-                        <ul class="nav pull-right">
-                            <li>
-                                <a href="login.html">Espace client</a>
-                            </li>
+                </div>
 
-                        </ul>
-                        <ul class="nav pull-right">
-                            <li>
-                                <a href="login.html">Contactez admin</a>
-                            </li>
-                        </ul>
+                <div class="box-content box-table">
+                    <table id="sample-table" class="table table-hover table-bordered tablesorter no-border">
 
-                        <ul class="nav pull-right">
-                            <li>
-                                <a href="login.html">Accueil</a>
-                            </li>
-                        </ul>
+                        <tbody>
 
+                            <?php
+                            function hotelRow($hotel)
+                            {
+                                ?>
+                                <tr>
+                                    <td style="width: 25%"><img src="<?= $hotel->photo ?>" width="150"></td>
+                                    <td>
+                                        <a href="#" class="news-item-title">
+                                            <?= $hotel->nom ?>
+                                        </a>
+                                        <hr style="margin: 10px 0;">
+                                        <p class="news-item-preview">
+                                            <?= "{$hotel->lieu->paysObj->nom} -
+                                        {$hotel->lieu->ville} -
+                                        {$hotel->lieu->lieu} -
+                                        $hotel->adresse $hotel->postal {$hotel->lieu->ville}." ?>
+                                        </p>
+                                    </td>
+                                </tr>
+                            <?php }
+
+                            foreach ($hotels->slice(0, 4) as $hotel) {
+                                hotelRow($hotel);
+                            }
+                            ?>
+
+
+                        </tbody>
+                    </table>
+                </div>
+
+
+
+                <div class="box-content box-list collapse in">
+
+                    <div class="box-collapse ">
+                        <button class="btn btn-box" data-toggle="collapse" data-target=".more-list">
+                            Afficher plus
+                        </button>
                     </div>
-                </div>
-            </div>
-        </div>
-        <div id="body-container">
-            <div id="body-content">
 
 
-            <div class='container'>
-                <div class="signin-row row">
-                    <div class="span4"></div>
-                    <div class="span8">
-                        <div class="container-signin">
-                            <legend style="line-height: 25px;padding: 15px 0;">Vous êtes administrateur du site adn voyage ? Veuillez s'identifier</legend>
-                            <form action='' method='POST' id='loginForm' class='form-signin' autocomplete='off'>
-                                <?php if ($redirUrl) { ?>
-                                <input type='hidden' name='redir' value='<?=htmlentities($redirUrl)?>' />
-                                <?php } ?>
+                    <div class="box-content box-table more-list collapse out">
+                        <table id="sample-table" class="table table-hover table-bordered tablesorter no-border">
 
-                                <div class="form-inner" style="margin-left: 0">
-                                    <div class="input-prepend" style="margin-bottom: 12px;">
-
-                                        <span class="add-on" rel="tooltip" title="Username or E-Mail Address" data-placement="top"><i class="icon-envelope"></i></span>
-                                        <input type='text' class='span4' id='username' name="pseudo" style="width: 92%" value="<?=$login?>" required/>
-                                    </div>
-
-                                    <div class="input-prepend" style="margin-bottom: 12px;">
-
-                                        <span class="add-on"><i class="icon-key"></i></span>
-                                        <input type='password' class='span4' id='password' name="password"  style="width: 92%" required/>
-                                    </div>
-                                    <label class="checkbox" for='remember_me'>Se souvenir de moi
-                                        <input type='checkbox' id='remember_me' name="remember" value="1" <?=$login ? "checked" : '' ?>
-                                               />
-                                    </label>
-                                </div>
-                                <footer class="signin-actions" style="text-align: center">
-                                    <input class="btn btn-danger" type='submit' id="submit" value='Mot de passe oublier'/> &nbsp;<input class="btn btn-primary" type='submit' id="submit" value='Se connecter' name="valider"/>
-                                </footer>
-                            </form>
-                        </div>
+                            <tbody>
+                                <?php
+                                foreach ($hotels->slice(4, 4) as $hotel) {
+                                    hotelRow($hotel);
+                                }
+                                ?>
+                            </tbody>
+                        </table>
                     </div>
-                    <div class="span3"></div>
+
                 </div>
-
-            <!--<div class="span4">
-
-                </div>-->
-            </div>
-
 
             </div>
         </div>
-
-        <div id="spinner" class="spinner" style="display:none;">
-            Loading&hellip;
-        </div>
-
-        <footer class="application-footer">
-            <div class="container">
-                                <p>ADN voyage Sarl <br>
-Rue Le-Corbusier, 8
-1208 Genève - Suisse
-info@adnvoyage.com</p>
-                <div class="disclaimer">
-                    <p>Ramseb & Urssy - All right reserved</p>
-                    <p>Copyright © ADN voyage Sarl 2022</p>
+        <div class="span8">
+            <div class="box">
+                <div class="box-header">
+                    <i class="icon-book"></i>
+                    <h5>Guide</h5>
+                </div>
+                <div class="box-content">
+                    <br>
+                    <p><a href="#" class="news-item-title">1) J'aimerai modifier mon profil ?</a></p>
+                    <p><a href="#" class="news-item-title">2) Comment ajouter une fiche hôtel ?</a></p>
+                    <p><a href="#" class="news-item-title">3) Comment ajouter une chambre ?</a></p>
+                    <p><a href="#" class="news-item-title">4) Je vais changer le taux de change, comment le faire ?</a>
+                    </p>
+                    <p><a href="#" class="news-item-title">5) Rémise et promotion?</a></p>
+                    <p><a href="#" class="news-item-title">6) Comment configurer une séjour?</a></p>
+                    <p><a href="#" class="news-item-title">7) Quels sont les différents types des séjours?</a></p>
+                </div>
+                <div class="box-footer">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="icon-ok"></i>
+                        Voir tous les FAQ
+                    </button>
                 </div>
             </div>
-        </footer>
-        <script type="text/javascript">
-            $(() => {
-                $('#username').focus();
-                $("[rel=tooltip]").tooltip();
-            });
-        </script>
-        <script src="../js/bootstrap/bootstrap-transition.js" type="text/javascript" ></script>
-        <script src="../js/bootstrap/bootstrap-alert.js" type="text/javascript" ></script>
-        <script src="../js/bootstrap/bootstrap-modal.js" type="text/javascript" ></script>
-        <script src="../js/bootstrap/bootstrap-dropdown.js" type="text/javascript" ></script>
-        <script src="../js/bootstrap/bootstrap-scrollspy.js" type="text/javascript" ></script>
-        <script src="../js/bootstrap/bootstrap-tab.js" type="text/javascript" ></script>
-        <script src="../js/bootstrap/bootstrap-tooltip.js" type="text/javascript" ></script>
-        <script src="../js/bootstrap/bootstrap-popover.js" type="text/javascript" ></script>
-        <script src="../js/bootstrap/bootstrap-button.js" type="text/javascript" ></script>
-        <script src="../js/bootstrap/bootstrap-collapse.js" type="text/javascript" ></script>
-        <script src="../js/bootstrap/bootstrap-carousel.js" type="text/javascript" ></script>
-        <script src="../js/bootstrap/bootstrap-typeahead.js" type="text/javascript" ></script>
-        <script src="../js/bootstrap/bootstrap-affix.js" type="text/javascript" ></script>
-        <script src="../js/bootstrap/bootstrap-datepicker.js" type="text/javascript" ></script>
-        <script src="../js/jquery/jquery-tablesorter.js" type="text/javascript" ></script>
-        <script src="../js/jquery/jquery-chosen.js" type="text/javascript" ></script>
-        <script src="../js/jquery/virtual-tour.js" type="text/javascript" ></script>
+        </div>
+    </div>
+</section>
 
-
-	</body>
-</html>
+<?php
+// termine la page en l'incluant dans le layout (header et footer)
+admin_finish();
