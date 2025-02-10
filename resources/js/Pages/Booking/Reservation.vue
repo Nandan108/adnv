@@ -76,74 +76,80 @@
 
             <div class="max-w-full overflow-hidden overflow-x-auto border-dashed mb-8 text-nowrap">
               <table class="text-nowrap w-full">
-                <tr>
-                  <th>Personne</th>
-                  <th>Vols</th>
-                  <th>Taxes aéroport</th>
-                  <th>Transferts</th>
-                  <th>Visa</th>
-                  <th>Hôtel</th>
-                  <th style="width: 12%">Total</th>
-                </tr>
-                <tr v-for="(participant, index) in booking.travelers" :key="index" class="">
-                  <td>
-                    <span class='capitalize'>{{ participant.typePerson }} : </span>
-                    <span class="font-bold">{{ participant.prenom }}</span>
-                  </td>
-                  <td>
-                    <AlignedPrice :price="participant.totals.total.vol" />
-                  </td>
-                  <td>
-                    <AlignedPrice :price="participant.totals.total.taxes_apt" />
-                  </td>
-                  <td>
-                    <AlignedPrice v-if="participant.totals.typePerson.transfert"
-                      :price="participant.totals.total.transfert" />
-                    <span v-else class='text-gray-400'>-</span>
-                    <div class="text-xs text-gray-500"
-                      v-if="(participant.totals.typePerson.transfert ?? participant.typePerson) !== participant.typePerson"
-                      v-text="'(tarif ' + personLabels[participant.totals.typePerson.transfert] + ')'"></div>
-                  </td>
-                  <td>
-                    <AlignedPrice v-if="participant.totals.typePerson.visa" :price="participant.totals.total.visa" />
-                    <span v-else class='text-gray-400'>-</span>
-                    <div class="text-xs text-gray-500"
-                      v-if="(participant.totals.typePerson.visa ?? participant.typePerson) !== participant.typePerson"
-                      v-text="'(tarif ' + personLabels[participant.totals.typePerson.visa] + ')'"></div>
-                  </td>
-                  <td>
-                    <AlignedPrice v-if="participant.totals.typePerson.chambre"
-                      :price="participant.totals.total.chambre" />
-                    <span v-else class='text-gray-400'>-</span>
-                    <div class="text-xs text-gray-500"
-                      v-if="(participant.totals.typePerson.chambre ?? participant.typePerson) !== participant.typePerson"
-                      v-text="'(tarif ' + personLabels[participant.totals.typePerson.chambre] + ')'"></div>
-                  </td>
-                  <td class="font-bold">
-                    <AlignedPrice :price="participant.totals.sousTotalSejour" />
-                  </td>
-                </tr>
-                <tr>
-                  <th>Sous total séjour</th>
-                  <td class='!bg-white' colspan="5"></td>
-                  <td class="font-bold text-base">
-                    <AlignedPrice :price="booking.totalSejour" />
-                  </td>
-                </tr>
+                <thead>
+                  <tr>
+                    <th>Personne</th>
+                    <th>Vols</th>
+                    <th>Taxes aéroport</th>
+                    <th>Transferts</th>
+                    <th>Visa</th>
+                    <th>Hôtel</th>
+                    <th style="width: 12%">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(participant, index) in booking.travelers" :key="index" class="">
+                    <td>
+                      <span class='capitalize'>{{ participant.typePerson }} : </span>
+                      <span class="font-bold">{{ participant.prenom }}</span>
+                    </td>
+                    <td>
+                      <AlignedPrice :price="participant.totals.total.vol" />
+                    </td>
+                    <td>
+                      <AlignedPrice :price="participant.totals.total.taxes_apt" />
+                    </td>
+                    <td>
+                      <AlignedPrice v-if="participant.totals.typePerson.transfert"
+                        :price="participant.totals.total.transfert" />
+                      <span v-else class='text-gray-400'>-</span>
+                      <div class="text-xs text-gray-500"
+                        v-if="(participant.totals.typePerson.transfert ?? participant.typePerson) !== participant.typePerson"
+                        v-text="'(tarif ' + personLabels[participant.totals.typePerson.transfert] + ')'"></div>
+                    </td>
+                    <td>
+                      <AlignedPrice v-if="participant.totals.typePerson.visa" :price="participant.totals.total.visa" />
+                      <span v-else class='text-gray-400'>-</span>
+                      <div class="text-xs text-gray-500"
+                        v-if="(participant.totals.typePerson.visa ?? participant.typePerson) !== participant.typePerson"
+                        v-text="'(tarif ' + personLabels[participant.totals.typePerson.visa] + ')'"></div>
+                    </td>
+                    <td>
+                      <AlignedPrice v-if="participant.totals.typePerson.chambre"
+                        :price="participant.totals.total.chambre" />
+                      <span v-else class='text-gray-400'>-</span>
+                      <div class="text-xs text-gray-500"
+                        v-if="(participant.totals.typePerson.chambre ?? participant.typePerson) !== participant.typePerson"
+                        v-text="'(tarif ' + personLabels[participant.totals.typePerson.chambre] + ')'"></div>
+                    </td>
+                    <td class="font-bold">
+                      <AlignedPrice :price="participant.totals.sousTotalSejour" />
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>Sous total séjour</th>
+                    <td class='!bg-white' colspan="5"></td>
+                    <td class="font-bold text-base">
+                      <AlignedPrice :price="booking.totalSejour" />
+                    </td>
+                  </tr>
+                </tbody>
               </table>
             </div>
 
             <div class="max-w-full overflow-hidden overflow-x-auto mb-8 text-nowrap">
               <table v-if="booking.hasTours">
-                <tr>
-                  <th class='!text-nowrap'>Personne</th>
-                  <th class='!text-nowrap' v-for="(tour, i) in tours" :key="i">
-                    <!-- :class="{ 'border-r-0': i > 0 }" -->
-                    <span class='text-gray-200'>Excursion</span><br />
-                    <i>{{ tour.nom }}</i>
-                  </th>
-                  <th class='!text-nowrap'>Total</th>
-                </tr>
+                <thead>
+                  <tr>
+                    <th class='!text-nowrap'>Personne</th>
+                    <th class='!text-nowrap' v-for="(tour, i) in tours" :key="i">
+                      <!-- :class="{ 'border-r-0': i > 0 }" -->
+                      <span class='text-gray-200'>Excursion</span><br />
+                      <i>{{ tour.nom }}</i>
+                    </th>
+                    <th class='!text-nowrap'>Total</th>
+                  </tr>
+                </thead>
 
                 <tbody>
                   <tr v-for="(traveler, index) in booking.travelers" :key="index">
@@ -168,20 +174,22 @@
               <!-- booking.hotelServices: [{{ booking.hotelServices }}] -->
               <!-- Meals & Services / Repas et Prestations -->
               <table v-if="booking.hotelServices?.length">
-                <tr>
-                  <th class='!text-nowrap'>Personne</th>
-                  <th class='!text-nowrap' v-if="booking.boardPlan">
-                    Repas<br />
-                    <span>{{ booking.boardPlan.type.name }}</span>
-                  </th>
-                  <th class='!text-nowrap' v-for="(service, i) in booking.services" :key="i">
-                    Prestation<br />
-                    <span>{{ service.type ? `${service.type.name} (${service.name})` : `&quot;${service.name}&quot;`
-                    }}</span>
-                  </th>
+                <thead>
+                  <tr>
+                    <th class='!text-nowrap'>Personne</th>
+                    <th class='!text-nowrap' v-if="booking.boardPlan">
+                      Repas<br />
+                      <span>{{ booking.boardPlan.type.name }}</span>
+                    </th>
+                    <th class='!text-nowrap' v-for="(service, i) in booking.services" :key="i">
+                      Prestation<br />
+                      <span>{{ service.type ? `${service.type.name} (${service.name})` : `&quot;${service.name}&quot;`
+                        }}</span>
+                    </th>
 
-                  <th class='!text-nowrap'>Total</th>
-                </tr>
+                    <th class='!text-nowrap'>Total</th>
+                  </tr>
+                </thead>
                 <tbody>
                   <tr v-for="(traveler, index) in booking.travelers" :key="index" class="">
                     <td class="text-center">
@@ -206,13 +214,15 @@
           <div class='text-xl'>ServiceTypes: {{ hotelServiceTypes }}</div> -->
             <!-- Final total -->
             <table class="w-full" style="margin-top: 2em">
-              <tr>
-                <th>Personne</th>
-                <th>Report Sous-total Séjour<br />+ Excursions + Prestations</th>
-                <th>Assurance<br /><i>Secure Trip</i></th>
-                <th>Taxes APT</th>
-                <th>Total</th>
-              </tr>
+              <thead>
+                <tr>
+                  <th>Personne</th>
+                  <th>Report Sous-total Séjour<br />+ Excursions + Prestations</th>
+                  <th>Assurance<br /><i>Secure Trip</i></th>
+                  <th>Taxes APT</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
               <tbody>
                 <tr v-for="(participant, index) in booking.travelers" :key="index">
                   <td>
@@ -282,8 +292,8 @@
 
               <div>
                 <label for="lastname">Nom *</label>
-                <input id="lastname" type="text" name="lastname" v-model="reserv_form.lastname" class="form-ctl" required
-                  :disabled='hasQuote' />
+                <input id="lastname" type="text" name="lastname" v-model="reserv_form.lastname" class="form-ctl"
+                  required :disabled='hasQuote' />
               </div>
 
               <div>

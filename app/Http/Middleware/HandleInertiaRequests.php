@@ -3,7 +3,6 @@
 namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Inertia\Middleware;
 
@@ -39,12 +38,16 @@ class HandleInertiaRequests extends Middleware
     {
         // This method doesn't seem to be called.
         // See Inertia::share() called from AppServiceProvider::boot()
-        return array_merge(parent::share($request), [
+        return [
+            ...parent::share($request),
             'flash'     => [
                 'success' => Session::get('success'),
                 'error'   => Session::get('error'),
                 'data'    => Session::get('data'),
             ],
-        ]);
+            'auth' => [
+                'user' => $request->user(),
+            ],
+        ];
     }
 }

@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\Chambre;
+namespace App\Repositories;
 
 class RoomRepository
 {

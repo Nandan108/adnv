@@ -44,7 +44,7 @@ ul.nav-list>li {
 
 .bg-img {
     @apply bg-fixed bg-center bg-cover;
-    background-image: url('/public/images/bg-img-1.jpg');
+    background-image: url('/images/bg-img-1.jpg');
 }
 @media print {
     .bg-img {

@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use Barryvdh\Debugbar\Facades\Debugbar;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
@@ -13,13 +14,13 @@ class DebugToggleMiddleware
     {
         // Get current APP_DEBUG setting from .env
         $envDebugSetting = (bool) env('APP_DEBUG', false);
-        $debug = $envDebugSetting;
+        $cookieDebugSetting = (bool) $request->cookie('_adnv_debug');
 
         // If adnv_debug is present in the query string, update the setting
         if ($request->has('adnv_debug')) {
             $debugParam = $request->input('adnv_debug');
 
-            if ($debugParam === '') {
+            if ($debugParam === "" || $debugParam === null) {
                 // Empty string: Remove cookie and use the default setting
                 $debug = $envDebugSetting;
                 $cookie = cookie('_adnv_debug', '', -1, '/'); // Expire cookie
@@ -30,12 +31,13 @@ class DebugToggleMiddleware
             }
         } else {
             // Use cookie or fallback to env setting
-            $debug = (bool)$request->cookie('_adnv_debug', $envDebugSetting);
+            $debug = $cookieDebugSetting ?? $envDebugSetting;
             $cookie = null;
         }
 
         // Apply the debug setting dynamically
         Config::set('app.debug', $debug);
+        Debugbar::{$debug ? 'enable' : 'disable'}();
 
         // Process the response
         $response = $next($request);

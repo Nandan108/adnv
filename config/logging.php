@@ -65,6 +65,7 @@ return [
             'replace_placeholders' => true,
         ],
 
+        // separate log for CLI requests (not standard)
         'cli' => [
             'driver' => 'single',
             'path' => storage_path('logs/cli.log'),

@@ -5,7 +5,7 @@
   <header class='fixed w-full pb-4 flex flex-col items-center' ref='headerRef'>
     <div class="w-full shadow-md h-12 bg-black">
       <div class="container flex flex-row justify-between items-center">
-        <a href="/" class="float-left block p-1 w-20"><img src="/public/images/logo2.png"></a>
+        <a href="/" class="float-left block p-1 w-20"><img src="/images/logo2.png"></a>
         <div id="app-nav-top-bar" class="nav-collapse">
           <ul class="nav pull-right flex flex-row">
             <li class="dropdown flex flex-row gap-3">

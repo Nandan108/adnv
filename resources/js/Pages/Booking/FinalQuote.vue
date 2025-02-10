@@ -1,6 +1,6 @@
 <style type='text/tailwindcss' scoped>
 #index-content {
-  background-image: url('/public/images/bg-img-1.jpg');
+  background-image: url('/images/bg-img-1.jpg');
   min-height: 50vh;
 }
 
@@ -61,7 +61,7 @@ p {
       <div class='page'>
         <header id="page-header" class="flex justify-between">
           <div id="adn-v" class="flex flex-col">
-            <img src='/public/images/logo.png' class="w-20 mb-2" />
+            <img src='/images/logo.png' class="w-20 mb-2" />
             <div v-for="text in quote?.header_address_lines ?? []">{{ text }}</div>
           </div>
           <div src="references" class="">
@@ -74,7 +74,7 @@ p {
           </div>
         </header>
         <div>
-          <h3>Devis {{ finalQuote ? 'Final' : 'Initial'}}</h3>
+          <h3>Devis {{ finalQuote ? 'Final' : 'Initial' }}</h3>
 
           <div id="client-address" class="text-lg w-72 bg-slate-50 relative ml-auto p-3 px-6">
             <div>{{ quote?.firstname }} {{ quote?.lastname }}</div>
@@ -88,57 +88,60 @@ p {
           </ul>
 
           <table class="w-full border td-border border-white mb-10">
-            <tr class="bg-cyan-300 text-lg border border-slate-300">
-              <td class="px-2">Description</td>
-              <td class="px-2" style="width:2em">
-                <span class="print:hidden">Quantité</span>
-                <span class="hidden print:inline">Qtté</span>
-              </td>
-              <td class="px-2">Prix</td>
-              <td class="px-2">Total</td>
-            </tr>
-
-            <tr v-for="item in itemsGrouped.primary">
-              <td class="px-2 text-sm">{{ item.description }}</td>
-              <td class="px-2 text-center" style="width:2em">{{ item.qtty }}</td>
-              <td class="px-2 text-right">{{ numFormatter.format(item.unitprice) }}</td>
-              <td class="px-2 text-right">{{ numFormatter.format(item.qtty * item.unitprice) }}</td>
-            </tr>
-            <tr>
-              <td class="text-right font-bold" colspan="3">Total séjour</td>
-              <td class="px-2 text-right font-bold">{{ numFormatter.format(totals.primary) }}</td>
-            </tr>
-            <tr>
-              <td colspan="4" class="border-0">&nbsp;</td>
-            </tr>
-            <template v-if="itemsGrouped.options">
+            <thead>
               <tr class="bg-cyan-300 text-lg border border-slate-300">
-                <td class="px-2">Description - <span class="text-base">Options supplémentaires commandées</span></td>
-                <td class="px-2 text-center">
+                <td class="px-2">Description</td>
+                <td class="px-2" style="width:2em">
                   <span class="print:hidden">Quantité</span>
                   <span class="hidden print:inline">Qtté</span>
                 </td>
-                <td class="px-2 text-right">Prix</td>
-                <td class="px-2 text-right">Total</td>
+                <td class="px-2">Prix</td>
+                <td class="px-2">Total</td>
               </tr>
-              <tr v-for="item in itemsGrouped.options">
+            </thead>
+            <tbody>
+              <tr v-for="item in itemsGrouped.primary">
                 <td class="px-2 text-sm">{{ item.description }}</td>
-                <td class="px-2 text-center">{{ item.qtty }}</td>
+                <td class="px-2 text-center" style="width:2em">{{ item.qtty }}</td>
                 <td class="px-2 text-right">{{ numFormatter.format(item.unitprice) }}</td>
                 <td class="px-2 text-right">{{ numFormatter.format(item.qtty * item.unitprice) }}</td>
               </tr>
               <tr>
-                <td class="text-right font-bold" colspan="3">Total options</td>
-                <td class="px-2 text-right font-bold">{{ numFormatter.format(totals.options) }}</td>
+                <td class="text-right font-bold" colspan="3">Total séjour</td>
+                <td class="px-2 text-right font-bold">{{ numFormatter.format(totals.primary) }}</td>
               </tr>
               <tr>
                 <td colspan="4" class="border-0">&nbsp;</td>
               </tr>
-            </template>
-            <tr>
-              <td class="bg-cyan-300 font-bold text-xl" colspan="3">Total Devis {{ quote?.currency.code }}</td>
-              <td class="px-2 text-right font-bold text-xl">{{ numFormatter.format(totals.total ?? 0) }}</td>
-            </tr>
+              <template v-if="itemsGrouped.options">
+                <tr class="bg-cyan-300 text-lg border border-slate-300">
+                  <td class="px-2">Description - <span class="text-base">Options supplémentaires commandées</span></td>
+                  <td class="px-2 text-center">
+                    <span class="print:hidden">Quantité</span>
+                    <span class="hidden print:inline">Qtté</span>
+                  </td>
+                  <td class="px-2 text-right">Prix</td>
+                  <td class="px-2 text-right">Total</td>
+                </tr>
+                <tr v-for="item in itemsGrouped.options">
+                  <td class="px-2 text-sm">{{ item.description }}</td>
+                  <td class="px-2 text-center">{{ item.qtty }}</td>
+                  <td class="px-2 text-right">{{ numFormatter.format(item.unitprice) }}</td>
+                  <td class="px-2 text-right">{{ numFormatter.format(item.qtty * item.unitprice) }}</td>
+                </tr>
+                <tr>
+                  <td class="text-right font-bold" colspan="3">Total options</td>
+                  <td class="px-2 text-right font-bold">{{ numFormatter.format(totals.options) }}</td>
+                </tr>
+                <tr>
+                  <td colspan="4" class="border-0">&nbsp;</td>
+                </tr>
+              </template>
+              <tr>
+                <td class="bg-cyan-300 font-bold text-xl" colspan="3">Total Devis {{ quote?.currency.code }}</td>
+                <td class="px-2 text-right font-bold text-xl">{{ numFormatter.format(totals.total ?? 0) }}</td>
+              </tr>
+            </tbody>
           </table>
 
           <div class="text-lg text-justify">
@@ -221,7 +224,7 @@ const formattedCreateDate = computed(() => {
 });
 
 const formattedValidatedDate = computed(() => {
-  return quote.value?.header_specific_lines.filter(({code}) => code === 'DV')[0].value;
+  return quote.value?.header_specific_lines.filter(({ code }) => code === 'DV')[0].value;
 });
 
 const items = computed(() => {
@@ -286,4 +289,3 @@ export default {
   // layout: MainLayout,
 }
 </script>
-

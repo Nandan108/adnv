@@ -37,8 +37,9 @@ class AuthenticatedSessionController extends Controller
         $redirRoute   = redirect()->intended($defaultRoute);
 
         // Get relative URL
-        $origin = "$_SERVER[REQUEST_SCHEME]://$_SERVER[HTTP_HOST]";
-        $url    = preg_replace("#^$origin#", '', $redirRoute->getTargetUrl());
+        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $host = $_SERVER['HTTP_HOST'] ?? $_SERVER['SERVER_NAME'];
+        $url    = preg_replace("#^$scheme://$host#", '', $redirRoute->getTargetUrl());
 
         // check whether this is a legacy URL
         $urlIsLegacy =

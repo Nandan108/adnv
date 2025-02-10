@@ -16,8 +16,8 @@ dbExec("SET SESSION sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY','')
 global $stripeEnv, $stripe;
 $stripeEnv = config('app.env') === 'local' ? '_TEST' : '_LIVE';
 $stripe = [
-    "secret_key"      => $_ENV['STRIPE_SECRET_KEY'.$stripeEnv],
-    "publishable_key" => $_ENV['STRIPE_PUBLIC_KEY'.$stripeEnv],
+    "secret_key"      => env('STRIPE_SECRET_KEY'.$stripeEnv),
+    "publishable_key" => env('STRIPE_PUBLIC_KEY'.$stripeEnv),
 ];
 \Stripe\Stripe::setApiKey($stripe['secret_key']);
 

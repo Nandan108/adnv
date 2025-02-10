@@ -21,7 +21,7 @@ a.nav-link {
         <div class="w-full shadow-md h-12 bg-black">
           <div class="container flex flex-row justify-between items-center">
             <a href="/" class="float-left block p-1 w-20">
-              <img src="/public/images/logo2.png">
+              <img src="/images/logo2.png">
             </a>
             <div id="app-nav-top-bar" class="nav-collapse text-sm">
               <ul class="nav pull-right flex flex-row">

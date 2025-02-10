@@ -10,10 +10,13 @@ export default defineConfig({
     server: process.env.VITE_DEV_SERVER_URL
         ? {
             host: '0.0.0.0', // Listen on all addresses, including LAN
-            port: 5173,
+            port: process.env.VITE_PORT || 5173,
+            strictPort: true,
             hmr: {
                 host: new URL(process.env.VITE_DEV_SERVER_URL).hostname,
+                // port: process.env.VITE_PORT,
             },
+            cors: true,
         }
         : undefined,
     plugins: [
@@ -23,21 +26,20 @@ export default defineConfig({
         }),
         vue({
             template: {
-                //base: null,
-                // transformAssetUrls: {
-                // The Vue plugin will re-write asset URLs, when referenced
-                // in Single File Components, to point to the Laravel web
-                // server. Setting this to `null` allows the Laravel plugin
-                // to instead re-write asset URLs to point to the Vite
-                // server instead.
-                base: null,
+                transformAssetUrls: {
+                    // The Vue plugin will re-write asset URLs, when referenced
+                    // in Single File Components, to point to the Laravel web
+                    // server. Setting this to `null` allows the Laravel plugin
+                    // to instead re-write asset URLs to point to the Vite
+                    // server instead.
+                    base: null,
 
-                // The Vue plugin will parse absolute URLs and treat them
-                // as absolute paths to files on disk. Setting this to
-                // `false` will leave absolute URLs un-touched so they can
-                // reference assets in the public directory as expected.
-                includeAbsolute: false,
-                // },
+                    // The Vue plugin will parse absolute URLs and treat them
+                    // as absolute paths to files on disk. Setting this to
+                    // `false` will leave absolute URLs un-touched so they can
+                    // reference assets in the public directory as expected.
+                    includeAbsolute: false,
+                },
             }
         })
     ],

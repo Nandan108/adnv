@@ -8,6 +8,7 @@ use App\Http\Controllers\Booking\IndexController as BookingIndexController;
 use App\Http\Controllers\Booking\ReservationController;
 use App\Http\Controllers\Booking\QuoteController;
 use App\Http\Controllers\LegacyController;
+use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use App\Http\Middleware\ServeLegacyAdminFiles;
 use Barryvdh\Debugbar\Facades\Debugbar;
@@ -37,12 +38,25 @@ if (!config('app.production')) {
 Route::domain($domains['admin'])->group(function () {
 
     // authentication (login/logout) routes
-    require __DIR__ . '/admin-auth.php';
+    require __DIR__ . '/auth.php';
+
+    Route::middleware('auth')->group(function () {
+        Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+        Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+        Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    });
 
     // Require an authenticated user for
     Route::middleware(['auth', 'verified'])->group(function () {
 
-        Route::prefix('devis-hotel/')->controller(CommercialdocController::class)->group(function () {
+        Route::get('/dashboard', function () {
+            // return Inertia::render('Dashboard');
+            // return Inertia::render('Welcome');
+            // redirect to admin.reservation.index
+            return redirect()->route('admin.reservation.index');
+        })->name('dashboard');
+
+        Route::prefix('/devis-hotel/')->controller(CommercialdocController::class)->group(function () {
 
             Route::get('', 'index')->name('admin.reservation.index');
             Route::get('index', 'index');
