@@ -14,9 +14,8 @@ abstract class Controller
 
     public function normalizeModels(Model|array|Arrayable $models): Collection {
         // make $models a Collection
-        $FEHService = $this->frontEndHelperService ??= app(FrontEndHelperService::class);
         $models = collect($models instanceof Model ? [$models] : $models);
-        $normalised = $FEHService->extractNormalizedRelations($models);
-        return $normalised;
+        // return normailzed models
+        return $this->frontEndHelperService->extractNormalizedRelations($models);
     }
 }

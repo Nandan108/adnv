@@ -34,37 +34,24 @@
 </head>
 
 <body>
-    <div class="container">
-        <header>
-            <table>
-                <tr>
-                    <td>
-                        <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('images/logo.png'))) }}"
-                            alt="ADN Voyage Logo" style="max-width: 100px; height: auto;">
-                    </td>
-                    <td style="padding: 0 0 0 1em">
-                        Rue le Corbusier 8<br>
-                        1208 Genève<br>
-                        +41 76 304 00 07<br>
-                    </td>
-                </tr>
-            </table>
-        </header>
-
-        <p>{{ $quote->longTitle }} {{ $quote->lastname }},</p>
 
 
-        <p>Nous vous prions de trouver ci-dessous le lien vers votre devis initial n°{{ $quote->doc_id }}, pour votre référence :</p>
+        <x-mails.base :subject="$subject">
+            <p>{{ $quote->longTitle }} {{ $quote->lastname }},</p>
 
-        <p><a href="{{ route('reservation.quote.show', $quote->hashId) }}" class="btn">Voir votre devis</a></p>
 
-        <p>Cordialement,<br>
-        L'équipe d'ADN Voyage</p>
+            <p>Nous vous prions de trouver ci-dessous le lien vers votre devis initial n°{{ $quote->doc_id }}, pour votre référence :</p>
 
-        <p>ADN Voyage SARL - Genève - Suisse<br />
-            <a href="https://www.adnvoyage.com">www.adnvoyage.com</a> -
-            <a href="mailto:info@adnvoyage.com" target="_blank">info@adnvoyage.com</a>
-        </p>
+            <p><a href="{{ route('reservation.quote.show', $quote->hashId) }}" class="btn">Voir votre devis</a></p>
+
+            <p>Cordialement,<br>
+            L'équipe d'ADN Voyage</p>
+
+            <p>ADN Voyage SARL - Genève - Suisse<br />
+                <a href="https://www.adnvoyage.com">www.adnvoyage.com</a> -
+                <a href="mailto:info@adnvoyage.com" target="_blank">info@adnvoyage.com</a>
+            </p>
+        </x-mails.base>
     </div>
 
 </body>

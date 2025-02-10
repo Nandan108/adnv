@@ -1,0 +1,35 @@
+/*
+@tailwind base;
+
+NOTE: For any change here to be taken in account in production, `npm run build` must be executed
+*/
+@tailwind components;
+@tailwind utilities;
+
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+}
+
+.container {
+    padding: 20px;
+    background-color: #f9f9f9;
+}
+
+.btn {
+    display: inline-block;
+    padding: 10px 20px;
+    color: white;
+    font-weight: bold;
+    background-color: #007bff;
+    text-decoration: none;
+    border-radius: 5px;
+}
+.logo {
+    max-width: 100px;
+}
+
+header table {
+    color: #6f6f6f;
+    font-size: 12px
+}

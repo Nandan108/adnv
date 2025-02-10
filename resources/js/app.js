@@ -18,10 +18,15 @@ createInertiaApp({
 
     let page = pages[`./Pages/${name}.vue`];
 
-    const defaultLayout = {
-      Booking: BookingLayout,
-      Admin: AdminLayout,
-    }[name.split('/')[0]];
+    let defaultLayout = null;
+    switch (true) {
+      // booking layout for all booking pages
+      case !!name.match(/^Booking\//): defaultLayout = BookingLayout; break;
+      // no layout for admin login pages
+      case !!name.match(/^Admin\/Auth\//): break;
+      // admin layout for all other admin pages
+      case !!name.match(/^Admin\//): defaultLayout = AdminLayout; break;
+    }
 
     // apply default layout
     page.default.layout = page.default.layout || defaultLayout

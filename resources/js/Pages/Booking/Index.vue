@@ -1,6 +1,6 @@
 <style type='text/tailwindcss'>
 #index-content {
-  background-image: url('/public/images/bg-img-1.jpg');
+  background-image: url('/images/bg-img-1.jpg');
   min-height: 50vh;
 }
 

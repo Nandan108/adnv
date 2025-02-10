@@ -18,7 +18,7 @@
       <div class='page'>
         <header id="page-header" class="flex justify-between">
           <div id="adn-v" class="flex flex-col">
-            <img src='/public/images/logo.png' class="w-20 mb-2" />
+            <img src='/images/logo.png' class="w-20 mb-2" />
             <div v-for="text in invoice?.header_address_lines ?? []">{{ text }}</div>
           </div>
           <div src="references" class="">
@@ -49,83 +49,87 @@
           </ul>
 
           <table class="w-full border td-border border-white mb-6">
-            <tr class="bg-[var(--adn-cyan)] text-lg border border-slate-300">
-              <td class="px-2">Description</td>
-              <td class="px-2" style="width:2em">
-                <span class="print:hidden">Quantité</span>
-                <span class="hidden print:inline">Qtté</span>
-              </td>
-              <td class="px-2">Prix</td>
-              <td class="px-2">Total</td>
-            </tr>
-
-            <tr v-for="item in itemsGrouped.primary">
-              <td class="px-2 text-sm">{{ item.description }}</td>
-              <td class="px-2 text-center" style="width:2em">{{ item.qtty }}</td>
-              <td class="px-2 text-right">{{ numFormatter.format(item.unitprice) }}</td>
-              <td class="px-2 text-right">{{ numFormatter.format(item.qtty * item.unitprice) }}</td>
-            </tr>
-            <tr>
-              <td class="text-right font-bold" colspan="3">Total séjour</td>
-              <td class="px-2 text-right font-bold">{{ numFormatter.format(totals.primary) }}</td>
-            </tr>
-            <tr>
-              <td colspan="4" class="border-0">&nbsp;</td>
-            </tr>
-            <template v-if="itemsGrouped.options">
+            <thead>
               <tr class="bg-[var(--adn-cyan)] text-lg border border-slate-300">
-                <td class="px-2">Description - <span class="text-base">Options supplémentaires commandées</span></td>
-                <td class="px-2 text-center">
+                <td class="px-2">Description</td>
+                <td class="px-2" style="width:2em">
                   <span class="print:hidden">Quantité</span>
                   <span class="hidden print:inline">Qtté</span>
                 </td>
-                <td class="px-2 text-right">Prix</td>
-                <td class="px-2 text-right">Total</td>
+                <td class="px-2">Prix</td>
+                <td class="px-2">Total</td>
               </tr>
-              <tr v-for="item in itemsGrouped.options">
+            </thead>
+            <tbody>
+              <tr v-for="item in itemsGrouped.primary">
                 <td class="px-2 text-sm">{{ item.description }}</td>
-                <td class="px-2 text-center">{{ item.qtty }}</td>
+                <td class="px-2 text-center" style="width:2em">{{ item.qtty }}</td>
                 <td class="px-2 text-right">{{ numFormatter.format(item.unitprice) }}</td>
                 <td class="px-2 text-right">{{ numFormatter.format(item.qtty * item.unitprice) }}</td>
               </tr>
               <tr>
-                <td class="text-right font-bold" colspan="3">Total options</td>
-                <td class="px-2 text-right font-bold">{{ numFormatter.format(totals.options) }}</td>
+                <td class="text-right font-bold" colspan="3">Total séjour</td>
+                <td class="px-2 text-right font-bold">{{ numFormatter.format(totals.primary) }}</td>
               </tr>
               <tr>
                 <td colspan="4" class="border-0">&nbsp;</td>
               </tr>
-            </template>
-            <tr>
-              <td class="bg-[var(--adn-cyan)] font-bold text-xl" colspan="3">
-                <div class='flex justify-between'>Total en notre faveur <span>{{ invoice?.currency.code }}</span></div>
-              </td>
-              <td class="px-2 text-right font-bold text-xl">{{ numFormatter.format(totals.total ?? 0) }}</td>
-            </tr>
-            <tr>
-              <td colspan="4" class="border-0"></td>
-            </tr>
-            <tr>
-              <td class="text-base" colspan="3">
-                <div class='flex justify-between items-center'>
-                  <span><span class='text-xl font-bold'>Acompte</span><br>à nous faire parvenir dès réception de votre
-                    facture</span>
-                  <span class='text-xl font-bold'>{{ invoice?.currency.code }}</span>
-                </div>
-              </td>
-              <td class="px-2 text-right font-bold text-xl">
-                <form v-if="invoice?.status === 'quote_validated'" class="flex flex-col items-center"
-                  @submit.prevent="sendInvoice">
-                  <div class="w-32">
-                    <InputNumber v-model="depositForm.depositAmount"
-                      :placeholder="(Math.round(totals.total / 300) * 100).toString()" inputId="depositAmount" fluid
-                      suffix=" CHF" class="text-center p-2" />
+              <template v-if="itemsGrouped.options">
+                <tr class="bg-[var(--adn-cyan)] text-lg border border-slate-300">
+                  <td class="px-2">Description - <span class="text-base">Options supplémentaires commandées</span></td>
+                  <td class="px-2 text-center">
+                    <span class="print:hidden">Quantité</span>
+                    <span class="hidden print:inline">Qtté</span>
+                  </td>
+                  <td class="px-2 text-right">Prix</td>
+                  <td class="px-2 text-right">Total</td>
+                </tr>
+                <tr v-for="item in itemsGrouped.options">
+                  <td class="px-2 text-sm">{{ item.description }}</td>
+                  <td class="px-2 text-center">{{ item.qtty }}</td>
+                  <td class="px-2 text-right">{{ numFormatter.format(item.unitprice) }}</td>
+                  <td class="px-2 text-right">{{ numFormatter.format(item.qtty * item.unitprice) }}</td>
+                </tr>
+                <tr>
+                  <td class="text-right font-bold" colspan="3">Total options</td>
+                  <td class="px-2 text-right font-bold">{{ numFormatter.format(totals.options) }}</td>
+                </tr>
+                <tr>
+                  <td colspan="4" class="border-0">&nbsp;</td>
+                </tr>
+              </template>
+              <tr>
+                <td class="bg-[var(--adn-cyan)] font-bold text-xl" colspan="3">
+                  <div class='flex justify-between'>Total en notre faveur <span>{{ invoice?.currency.code }}</span>
                   </div>
-                  <button class="btn mt-2 text-sm font-normal">Envoyer la facture</button>
-                </form>
-                <template v-else>{{ numFormatter.format(invoice?.depositAmount) }}</template>
-              </td>
-            </tr>
+                </td>
+                <td class="px-2 text-right font-bold text-xl">{{ numFormatter.format(totals.total ?? 0) }}</td>
+              </tr>
+              <tr>
+                <td colspan="4" class="border-0"></td>
+              </tr>
+              <tr>
+                <td class="text-base" colspan="3">
+                  <div class='flex justify-between items-center'>
+                    <span><span class='text-xl font-bold'>Acompte</span><br>à nous faire parvenir dès réception de votre
+                      facture</span>
+                    <span class='text-xl font-bold'>{{ invoice?.currency.code }}</span>
+                  </div>
+                </td>
+                <td class="px-2 text-right font-bold text-xl">
+                  <form v-if="invoice?.status === 'quote_validated'" class="flex flex-col items-center"
+                    @submit.prevent="sendInvoice">
+                    <div class="w-32">
+                      <InputNumber v-model="depositForm.depositAmount"
+                        :placeholder="(Math.round(totals.total / 300) * 100).toString()" inputId="depositAmount" fluid
+                        suffix=" CHF" class="text-center p-2" />
+                    </div>
+                    <button class="btn mt-2 text-sm font-normal">Envoyer la facture</button>
+                  </form>
+                  <template v-else>{{ numFormatter.format(invoice?.depositAmount) }}</template>
+                </td>
+              </tr>
+            </tbody>
           </table>
           <h3 class="text-center mb-8 text-green-700 text-xl font-bold">* INFORMATION BANCAIRE : voir dernière page</h3>
 
@@ -147,28 +151,37 @@
           <div v-if="invoice.flightLines.length">
             <div class="mb-2 text-lg font-bold italic uppercase text-cyan-600">Informations sur vos vols</div>
             <table class="w-full border td-border border-white mb-4">
-              <tr class="bg-[var(--adn-green)] text-lg border border-slate-300 font-semibold">
-                <td class="px-2">Date</td>
-                <td class="px-2">N° de vol</td>
-                <td class="px-2 text-center">Départ</td>
-                <td class="px-2 text-center">Arrivée</td>
-              </tr>
-              <tr v-for="fl in invoice.flightLines">
-                <td class="px-2 whitespace-pre">{{ fl.date }}</td>
-                <td class="px-2 ">{{ fl.airline }} {{ fl.flightNum }}</td>
-                <td class="px-2 text-center">{{ fl.origin }} à {{ fl.departureTime }}</td>
-                <td class="px-2 text-center">{{ fl.destination }} à {{ fl.arrivalTime }} {{ fl.arrivalNextDay ? '+1' : '' }}</td>
-              </tr>
+              <thead>
+                <tr class="bg-[var(--adn-green)] text-lg border border-slate-300 font-semibold">
+                  <td class="px-2">Date</td>
+                  <td class="px-2">N° de vol</td>
+                  <td class="px-2 text-center">Départ</td>
+                  <td class="px-2 text-center">Arrivée</td>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="fl in invoice.flightLines">
+                  <td class="px-2 whitespace-pre">{{ fl.date }}</td>
+                  <td class="px-2 ">{{ fl.airline }} {{ fl.flightNum }}</td>
+                  <td class="px-2 text-center">{{ fl.origin }} à {{ fl.departureTime }}</td>
+                  <td class="px-2 text-center">{{ fl.destination }} à {{ fl.arrivalTime }} {{ fl.arrivalNextDay ? '+1' :
+                    '' }}</td>
+                </tr>
+              </tbody>
             </table>
             <table class="w-full border td-border border-white mb-6">
-              <tr class="bg-[var(--adn-green)] text-lg border border-slate-300 font-semibold">
-                <td class="px-2 ">Voyageur</td>
-                <td class="px-2 ">N° de Billet</td>
-              </tr>
-              <tr v-for="traveler in invoice?.travelerLines">
-                <td class="px-2 text-left">{{ traveler.name }}</td>
-                <td class="px-2 text-left">{{ traveler.ticketNum }}</td>
-              </tr>
+              <thead>
+                <tr class="bg-[var(--adn-green)] text-lg border border-slate-300 font-semibold">
+                  <td class="px-2 ">Voyageur</td>
+                  <td class="px-2 ">N° de Billet</td>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="traveler in invoice?.travelerLines">
+                  <td class="px-2 text-left">{{ traveler.name }}</td>
+                  <td class="px-2 text-left">{{ traveler.ticketNum }}</td>
+                </tr>
+              </tbody>
             </table>
           </div>
 
@@ -176,59 +189,75 @@
             <div class="mb-2 text-lg font-bold italic uppercase text-cyan-600">Information sur vos trajets (transfert)
             </div>
             <table class="w-full border td-border border-white mb-4">
-              <tr class="bg-[var(--adn-green)] text-lg border border-slate-300 font-semibold">
-                <td class="px-2">Pickup </td>
-                <td class="px-2">Drop off</td>
-                <td class="px-2">Durée</td>
-                <td class="px-2">Trajet</td>
-                <td class="px-2">Véhicule</td>
-              </tr>
-              <tr v-for="fl in invoice.transferLines">
-                <td class="px-2 ">{{ fl.pickup }}</td>
-                <td class="px-2 ">{{ fl.dropoff }} {{ fl.flightNum }}</td>
-                <td class="px-2 ">{{ fl.duration }}</td>
-                <td class="px-2 ">{{ fl.route }}</td>
-                <td class="px-2 ">{{ fl.vehicle }}</td>
-              </tr>
+              <thead>
+                <tr class="bg-[var(--adn-green)] text-lg border border-slate-300 font-semibold">
+                  <td class="px-2">Pickup </td>
+                  <td class="px-2">Drop off</td>
+                  <td class="px-2">Durée</td>
+                  <td class="px-2">Trajet</td>
+                  <td class="px-2">Véhicule</td>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="fl in invoice.transferLines">
+                  <td class="px-2 ">{{ fl.pickup }}</td>
+                  <td class="px-2 ">{{ fl.dropoff }} {{ fl.flightNum }}</td>
+                  <td class="px-2 ">{{ fl.duration }}</td>
+                  <td class="px-2 ">{{ fl.route }}</td>
+                  <td class="px-2 ">{{ fl.vehicle }}</td>
+                </tr>
+              </tbody>
             </table>
             <table class="w-full border td-border border-white mb-6">
-              <tr class="bg-[var(--adn-green)] text-lg border border-slate-300 font-semibold">
-                <td class="px-2 ">Remarques</td>
-              </tr>
-              <tr v-for="comment in invoice.transferComments">
-                <td class="px-2 text-left whitespace-pre-wrap" v-html="comment.comments"></td>
-              </tr>
+              <thead>
+                <tr class="bg-[var(--adn-green)] text-lg border border-slate-300 font-semibold">
+                  <td class="px-2 ">Remarques</td>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="comment in invoice.transferComments">
+                  <td class="px-2 text-left whitespace-pre-wrap" v-html="comment.comments"></td>
+                </tr>
+              </tbody>
             </table>
           </div>
 
           <div v-if="invoice.hotelLines.length">
             <div class="mb-2 text-lg font-bold italic uppercase text-cyan-600">Information sur votre logement</div>
             <table class="w-full border td-border border-white mb-4">
-              <tr class="bg-[var(--adn-green)] text-lg border border-slate-300 font-semibold">
-                <td class="px-2">Checkin</td>
-                <td class="px-2">Checkout</td>
-                <td class="px-2">Hotel</td>
-                <td class="px-2">RoomType</td>
-                <td class="px-2">MealType</td>
-              </tr>
-              <tr v-for="fl in invoice.hotelLines">
-                <td class="px-2 text-right" v-html="formatDateTime(fl.checkin)"></td>
-                <td class="px-2 text-right" v-html="formatDateTime(fl.checkout)"></td>
-                <td class="px-2">{{ fl.hotel }}</td>
-                <td class="px-2">{{ fl.roomType }}</td>
-                <td class="px-2">{{ fl.mealType }}</td>
-              </tr>
+              <thead>
+                <tr class="bg-[var(--adn-green)] text-lg border border-slate-300 font-semibold">
+                  <td class="px-2">Checkin</td>
+                  <td class="px-2">Checkout</td>
+                  <td class="px-2">Hotel</td>
+                  <td class="px-2">RoomType</td>
+                  <td class="px-2">MealType</td>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="fl in invoice.hotelLines">
+                  <td class="px-2 text-right" v-html="formatDateTime(fl.checkin)"></td>
+                  <td class="px-2 text-right" v-html="formatDateTime(fl.checkout)"></td>
+                  <td class="px-2">{{ fl.hotel }}</td>
+                  <td class="px-2">{{ fl.roomType }}</td>
+                  <td class="px-2">{{ fl.mealType }}</td>
+                </tr>
+              </tbody>
             </table>
             <table class="w-full border td-border border-white mb-6">
-              <tr class="bg-[var(--adn-green)] text-lg border border-slate-300 font-semibold">
-                <td class="px-2 ">Info / Remarques sur le séjour</td>
-              </tr>
-              <tr v-for="tripInfo in invoice.tripInfo">
-                <td class="px-2 text-left" v-html="tripInfo.info
-                  .split(/\n/m)
-                  .map(l => `<p>${l.trim()}<p>`).join('')">
-                </td>
-              </tr>
+              <thead>
+                <tr class="bg-[var(--adn-green)] text-lg border border-slate-300 font-semibold">
+                  <td class="px-2 ">Info / Remarques sur le séjour</td>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="tripInfo in invoice.tripInfo">
+                  <td class="px-2 text-left" v-html="tripInfo.info
+                    .split(/\n/m)
+                    .map(l => `<p>${l.trim()}<p>`).join('')">
+                  </td>
+                </tr>
+              </tbody>
             </table>
 
 
@@ -311,7 +340,7 @@ const itemsGrouped = computed(() =>
 )
 
 const formatDateTime = (data, fmt = 'dd.MM.yyyy HH:mm') => {
-  return data ? format(new Date(data), fmt, { locale: fr }).replace(/ /,'&nbsp;') : data;
+  return data ? format(new Date(data), fmt, { locale: fr }).replace(/ /, '&nbsp;') : data;
 };
 
 
@@ -329,7 +358,7 @@ export default {
 <style type='text/tailwindcss' scoped>
 /*
 #index-content {
-  background-image: url('/public/images/bg-img-1.jpg');
+  background-image: url('/images/bg-img-1.jpg');
   min-height: 100vh;
   min-width: 100vw;
 } */
@@ -387,4 +416,3 @@ span.text-center>.p-inputtext {
   text-align: center;
 }
 </style>
-

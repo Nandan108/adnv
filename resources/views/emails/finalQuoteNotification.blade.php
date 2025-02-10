@@ -39,8 +39,7 @@
             <table>
                 <tr>
                     <td>
-                        <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('images/logo.png'))) }}"
-                            alt="ADN Voyage Logo" style="max-width: 100px; height: auto;">
+                        <img src="cid:logo_img" alt="ADN Voyage Logo" style="max-width: 100px; height: auto;">
                     </td>
                     <td style="padding: 0 0 0 1em">
                         Rue le Corbusier 8<br>

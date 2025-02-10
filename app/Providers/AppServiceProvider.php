@@ -8,9 +8,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 use Inertia\Inertia;
-use Session;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -62,5 +63,7 @@ class AppServiceProvider extends ServiceProvider
                 return $flashData;
             },
         ]);
+
+        Vite::prefetch(concurrency: 3);
     }
 }

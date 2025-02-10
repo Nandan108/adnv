@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="fr">
 
 <head>
@@ -39,8 +39,7 @@
             <table>
                 <tr>
                     <td>
-                        <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('images/logo.png'))) }}"
-                            alt="ADN Voyage Logo" style="max-width: 100px; height: auto;">
+                        <img src="cid:logo_img" alt="ADN Voyage Logo" style="max-width: 100px; height: auto;">
                     </td>
                     <td style="padding: 0 0 0 1em">
                         Rue le Corbusier 8<br>
@@ -49,11 +48,15 @@
                     </td>
                 </tr>
             </table>
-        </header>
+        </header> -->
+
+        <x-mails.base :message :subject>
 
         {!! $content !!}
 
-        <hr />
+        </x-mails.base>
+
+        <!-- <hr />
         <p>ADN Voyage SARL - Genève - Suisse<br />
             <a href="https://www.adnvoyage.com">www.adnvoyage.com</a> -
             <a href="mailto:info@adnvoyage.com" target="_blank">info@adnvoyage.com</a>
@@ -62,4 +65,4 @@
 
 </body>
 
-</html>
+</html> -->
